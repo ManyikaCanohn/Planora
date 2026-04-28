@@ -1,0 +1,29 @@
+@import "tailwindcss";
+@import url('https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500&display=swap');
+
+@font-face {
+  font-family: 'Canosa';
+  src: url('/fonts/Canosa-Regular.woff2') format('woff2');
+}
+
+:root {
+  --primary: #6366F1;
+  --secondary: #8B5CF6;
+  --dark: #0F172A;
+  --light: #FAF8FC;
+  --accent: #EDE9FE;
+
+  --font-main: 'Canosa', sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
+}
+
+@theme {
+  --color-primary: var(--primary);
+  --color-secondary: var(--secondary);
+  --color-dark: var(--dark);
+  --color-light: var(--light);
+  --color-accent: var(--accent);
+
+  --font-sans: var(--font-main);
+  --font-mono: var(--font-mono);
+}
