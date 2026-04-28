@@ -1,5 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
+import {
+  FaMoon,
+  FaBell,
+  FaUserCircle,
+} from "react-icons/fa";
+import { FiClock } from "react-icons/fi";
 
 type Event = {
   id: number;
@@ -14,17 +20,32 @@ type Event = {
 const API = "http://localhost:5000/api/events";
 
 const typeColors: Record<string, string> = {
-  virtual: "#6366f1",
-  physical: "#10b981",
-  meeting: "#f59e0b",
-  conference: "#ef4444"
+  virtual: "bg-indigo-500",
+  physical: "bg-emerald-500",
+  meeting: "bg-amber-500",
+  conference: "bg-red-500",
+};
+
+const formatCountdown = (ms: number) => {
+  const totalSeconds = Math.floor(ms / 1000);
+
+  const days = Math.floor(totalSeconds / (3600 * 24));
+  const hours = Math.floor((totalSeconds % (3600 * 24)) / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+
+  return `${days}d : ${hours}h : ${minutes}m : ${seconds}s`;
 };
 
 export default function Calendar() {
   const [events, setEvents] = useState<Event[]>([]);
   const [currentDate, setCurrentDate] = useState(new Date());
+  const [view, setView] = useState("Monthly");
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
+  const [reminders, setReminders] = useState<Event[]>([]);
+  const [now, setNow] = useState(new Date());
 
+  // ================= FETCH EVENTS =================
   useEffect(() => {
     const fetchEvents = async () => {
       const res = await axios.get(API, { withCredentials: true });
@@ -33,7 +54,90 @@ export default function Calendar() {
     fetchEvents();
   }, []);
 
-  // 📅 MONTH GRID
+  // ================= NOTIFICATION PERMISSION =================
+  useEffect(() => {
+    if ("Notification" in window && Notification.permission !== "granted") {
+      Notification.requestPermission();
+    }
+  }, []);
+
+  // ================= REMINDER ENGINE =================
+  useEffect(() => {
+    const checkReminders = () => {
+      const now = new Date();
+
+      const upcoming = events.filter((event) => {
+        const start = new Date(event.start_date);
+        const diff = start.getTime() - now.getTime();
+
+        return diff > 0 && diff <= 30 * 60 * 1000; // next 30 mins
+      });
+
+      setReminders(upcoming);
+
+      // browser notifications
+      upcoming.forEach((event) => {
+        if (Notification.permission === "granted") {
+          new Notification("⏰ Upcoming Event", {
+            body: `${event.title} starts soon`,
+          });
+        }
+      });
+    };
+
+    checkReminders();
+    const interval = setInterval(checkReminders, 60000);
+
+    return () => clearInterval(interval);
+  }, [events]);
+
+  // ================== COUNTDOWN======================
+  useEffect(() => {
+  const interval = setInterval(() => {
+    setNow(new Date());
+  }, 1000);
+
+  return () => clearInterval(interval);
+}, []);
+
+  const today = new Date();
+
+  const todayEvents = events.filter((e) => {
+    const d = new Date(e.start_date);
+    return (
+      d.getFullYear() === today.getFullYear() &&
+      d.getMonth() === today.getMonth() &&
+      d.getDate() === today.getDate()
+    );
+  });
+
+  const upcomingEvent = [...events]
+  .map((e) => ({
+    ...e,
+    diff: new Date(e.start_date).getTime() - now.getTime(),
+  }))
+  .filter((e) => e.diff > 0)
+  .sort((a, b) => a.diff - b.diff)[0];
+
+  const weekEvents = events.filter((e) => {
+    const d = new Date(e.start_date);
+    const diffDays =
+      (d.getTime() - today.getTime()) / (1000 * 60 * 60 * 24);
+    return diffDays >= 0 && diffDays <= 7;
+  });
+
+    const busiestDay = (() => {
+      const map: Record<string, number> = {};
+
+      events.forEach((e) => {
+        const d = new Date(e.start_date).toDateString();
+        map[d] = (map[d] || 0) + 1;
+      });
+
+      return Object.entries(map).sort((a, b) => b[1] - a[1])[0];
+    })();
+
+  // ================= CALENDAR GRID =================
   const monthMatrix = useMemo(() => {
     const year = currentDate.getFullYear();
     const month = currentDate.getMonth();
@@ -42,196 +146,276 @@ export default function Calendar() {
     const startDay = new Date(firstDay);
     startDay.setDate(startDay.getDate() - firstDay.getDay());
 
-    const days: Date[] = [];
-
-    for (let i = 0; i < 42; i++) {
+    return Array.from({ length: 42 }).map((_, i) => {
       const date = new Date(startDay);
       date.setDate(startDay.getDate() + i);
-      days.push(date);
-    }
-
-    return days;
+      return date;
+    });
   }, [currentDate]);
 
-  // 🔍 EVENTS PER DAY
   const getEventsForDay = (date: Date) => {
     return events.filter((event) => {
-      const eventDate = new Date(event.start_date);
+      const d = new Date(event.start_date);
       return (
-        eventDate.getFullYear() === date.getFullYear() &&
-        eventDate.getMonth() === date.getMonth() &&
-        eventDate.getDate() === date.getDate()
+        d.getFullYear() === date.getFullYear() &&
+        d.getMonth() === date.getMonth() &&
+        d.getDate() === date.getDate()
       );
     });
   };
 
   const monthLabel = currentDate.toLocaleString("default", {
     month: "long",
-    year: "numeric"
+    year: "numeric",
   });
 
   const changeMonth = (dir: number) => {
-    setCurrentDate(new Date(currentDate.setMonth(currentDate.getMonth() + dir)));
+    setCurrentDate(
+      new Date(currentDate.getFullYear(), currentDate.getMonth() + dir, 1)
+    );
   };
 
-  const weekDays = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
-  const isToday = (date: Date) =>
-    new Date().toDateString() === date.toDateString();
-
-  const isCurrentMonth = (date: Date) =>
-    date.getMonth() === currentDate.getMonth();
-
   return (
-    <div className="h-screen flex flex-col bg-gray-950 text-white overflow-hidden">
+    <div className="min-h-screen  from-indigo-100 via-purple-100 to-indigo-200 flex">
 
-      {/* ================= HEADER (10vh SaaS style) ================= */}
-      <div className="h-[10vh] flex items-center justify-between px-6 border-b border-gray-800">
+      {/* ================= MAIN ================= */}
+      <main className="flex-1 p-6 font-mono">
 
-        <h1 className="text-lg font-bold tracking-wide">
-          Planora Calendar
-        </h1>
+        {/* TOP BAR */}
+        <div className="flex justify-between items-center mb-6">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-800">
+              Planora Calendar
+            </h1>
+            <p className="text-sm text-gray-500">
+              Click a day to view events
+            </p>
+          </div>
 
-        {/* MONTH TITLE */}
-        <p className="text-xl font-semibold text-indigo-300">
-          {monthLabel}
-        </p>
+          <div className="flex items-center gap-3">
+            <div className="flex bg-white/50 rounded-full p-1">
+              {["Daily", "Weekly", "Monthly"].map((v) => (
+                <button
+                  key={v}
+                  onClick={() => setView(v)}
+                  className={`px-3 py-1 text-sm rounded-full transition ${
+                    view === v ? "bg-indigo-600 text-white" : "text-gray-600"
+                  }`}
+                >
+                  {v}
+                </button>
+              ))}
+            </div>
 
-        {/* NAV CONTROLS */}
-        <div className="flex gap-2 items-center">
+            <FaMoon className="text-gray-600" />
+            <FaBell className="text-gray-600" />
+            <FaUserCircle className="text-2xl text-gray-700" />
+          </div>
+        </div>
+
+
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-6">
+
+        {/* 1. TODAY SUMMARY */}
+        <div className="bg-white/60 p-4 rounded-2xl shadow">
+          <p className="text-xs text-gray-500">Today Summary</p>
+          <h2 className="text-lg font-bold">{todayEvents.length} Events</h2>
+        </div>
+
+        {/* 2. NEXT EVENT */}
+        <div className="bg-white/60 p-4 rounded-2xl shadow flex items-center gap-2">
+          <FiClock />
+          <div>
+            <p className="text-xs text-gray-500">Next Event</p>
+            <h2 className="text-sm font-bold">
+              {upcomingEvent
+                ? upcomingEvent.title
+                : "No upcoming events"}
+            </h2>
+          </div>
+        </div>
+
+        {/* 3. COUNTDOWN */}
+        <div className="bg-white/60 p-4 rounded-2xl shadow">
+          <p className="text-xs text-gray-500">Countdown</p>
+          <h2 className="text-sm font-bold">
+              {upcomingEvent
+                ? formatCountdown(upcomingEvent.diff)
+                : "--"}
+            </h2>
+        </div>
+
+        {/* 4. WEEK SNAPSHOT */}
+        <div className="bg-white/60 p-4 rounded-2xl shadow">
+          <p className="text-xs text-gray-500">This Week</p>
+          <h2 className="text-sm font-bold">
+            {weekEvents.length} Events
+          </h2>
+        </div>
+
+          {/* 5. BILLEST DAY */}
+          <div className="bg-white/60 p-4 rounded-2xl shadow">
+            <p className="text-xs text-gray-500">Busiest Day</p>
+            <h2 className="text-sm font-bold">
+              {busiestDay ? busiestDay[0] : "N/A"}
+            </h2>
+          </div>
+
+        </div>
+
+        {/* MONTH NAV */}
+        <div className="flex justify-between items-center mb-4">
           <button
-            onClick={() =>
-              setCurrentDate(
-                new Date(currentDate.setMonth(currentDate.getMonth() - 1))
-              )
-            }
-            className="px-3 py-1 bg-gray-800 rounded hover:bg-gray-700"
+            onClick={() => changeMonth(-1)}
+            className="px-3 py-1 bg-white/60 rounded-xl shadow"
           >
             Prev
           </button>
 
-          <button
-            onClick={() => setCurrentDate(new Date())}
-            className="px-3 py-1 bg-indigo-600 rounded hover:bg-indigo-500"
-          >
-            Today
-          </button>
+          <h2 className="text-lg font-semibold text-gray-700">
+            {monthLabel}
+          </h2>
 
           <button
-            onClick={() =>
-              setCurrentDate(
-                new Date(currentDate.setMonth(currentDate.getMonth() + 1))
-              )
-            }
-            className="px-3 py-1 bg-gray-800 rounded hover:bg-gray-700"
+            onClick={() => changeMonth(1)}
+            className="px-3 py-1 bg-white/60 rounded-xl shadow"
           >
             Next
           </button>
         </div>
-      </div>
 
-      {/* ================= WEEK HEADER ================= */}
-      <div className="grid grid-cols-7 text-center text-xs text-gray-400 border-b border-gray-800">
-        {weekDays.map((d) => (
-          <div key={d} className="py-2">
-            {d}
-          </div>
-        ))}
-      </div>
+        {/* CALENDAR GRID */}
+        <div className="grid grid-cols-7 gap-2">
+          {monthMatrix.map((date, i) => {
+            const dayEvents = getEventsForDay(date);
 
-      {/* ================= CALENDAR GRID ================= */}
-      <div className="grid grid-cols-7 flex-1 overflow-hidden">
+            const hasReminder = reminders.some((r) => {
+              const d = new Date(r.start_date);
+              return (
+                d.getFullYear() === date.getFullYear() &&
+                d.getMonth() === date.getMonth() &&
+                d.getDate() === date.getDate()
+              );
+            });
 
-        {monthMatrix.map((date, i) => (
-          <div
-            key={i}
-            onClick={() => setSelectedDay(date)}
-            className={`border border-gray-900 p-2 min-h-[100px] flex flex-col hover:bg-gray-900 transition cursor-pointer ${
-              isCurrentMonth(date) ? "" : "opacity-30"
-            }`}
-          >
-
-            {/* DATE */}
-            <div
-              className={`text-sm mb-1 ${
-                isToday(date) ? "text-indigo-400 font-bold" : "text-gray-300"
-              }`}
-            >
-              {date.getDate()}
-            </div>
-
-            {/* EVENTS */}
-            <div className="space-y-1 overflow-hidden">
-              {getEventsForDay(date).map((event) => (
-                <div
-                  key={event.id}
-                  className="text-xs px-2 py-1 rounded truncate text-white shadow-sm"
-                  style={{
-                    backgroundColor: typeColors[event.event_type] || "#374151"
-                  }}
-                >
-                  {event.title}
+            return (
+              <div
+                key={i}
+                onClick={() => setSelectedDay(date)}
+                className="bg-white/50 backdrop-blur p-2 rounded-xl min-h-[100px] shadow-sm hover:shadow-md transition cursor-pointer"
+              >
+                <div className="text-sm font-semibold text-gray-700 mb-2">
+                  {date.getDate()}
                 </div>
-              ))}
-            </div>
 
-          </div>
-        ))}
-      </div>
+                <div className="space-y-1">
+                  {dayEvents.slice(0, 2).map((event) => (
+                    <div
+                      key={event.id}
+                      className={`text-[10px] text-white px-2 py-1 rounded-lg truncate ${
+                        typeColors[event.event_type]
+                      }`}
+                    >
+                      {event.title}
+                    </div>
+                  ))}
 
-      {/* ================= SIDEBAR ================= */}
+                  {dayEvents.length > 2 && (
+                    <div className="text-[10px] text-gray-500">
+                      +{dayEvents.length - 2} more
+                    </div>
+                  )}
+
+                  {hasReminder && (
+                    <div className="text-[10px] flex items-center gap-1 mt-1 px-2 py-[2px] rounded-full bg-yellow-400 text-black font-medium w-fit">
+                      <FiClock /> Soon
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      </main>
+
+      {/* ================= DAY MODAL ================= */}
       {selectedDay && (
-        <div className="fixed right-0 top-0 h-full w-80 bg-gray-900 border-l border-gray-800 p-4 flex flex-col shadow-2xl">
+        <div className="fixed right-0 top-0 h-full w-96 bg-white/40 backdrop-blur-2xl border-l border-white/30 shadow-2xl p-5 flex flex-col">
 
           {/* HEADER */}
-          <div className="flex items-center justify-between mb-5">
-            <h2 className="text-lg font-bold">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-lg font-bold text-gray-800">
               {selectedDay.toDateString()}
             </h2>
 
             <button
               onClick={() => setSelectedDay(null)}
-              className="text-gray-400 hover:text-white text-xl"
+              className="text-gray-500 hover:text-gray-800 text-xl"
             >
               ✕
             </button>
           </div>
 
+          {/* REMINDERS */}
+          {reminders.length > 0 && (
+            <div className="mb-4 p-3 rounded-xl bg-yellow-100 border border-yellow-300">
+              <h3 className="text-sm font-semibold text-yellow-800">
+                Upcoming Reminders
+              </h3>
+
+              <div className="mt-2 space-y-1">
+                {reminders.map((r) => (
+                  <div key={r.id} className="text-xs text-yellow-900">
+                    ⏰ {r.title} —{" "}
+                    {new Date(r.start_date).toLocaleTimeString([], {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                    })}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* EVENTS */}
-          <div className="flex-1 overflow-y-auto">
+          <div className="flex-1 overflow-y-auto space-y-3">
+
             {getEventsForDay(selectedDay).length === 0 ? (
-              <p className="text-gray-400">No events for this day</p>
+              <p className="text-gray-500">No events for this day</p>
             ) : (
               getEventsForDay(selectedDay).map((event) => (
                 <div
                   key={event.id}
-                  className="p-3 mb-3 rounded-lg bg-gray-800 border border-gray-700 hover:bg-gray-750 transition"
+                  className="p-4 rounded-2xl bg-white/60 border border-white/40 shadow-sm"
                 >
-                  <h3 className="font-semibold text-white mb-1">
-                    {event.title}
-                  </h3>
+                  <div className="flex justify-between items-start">
+                    <h3 className="font-semibold text-gray-800">
+                      {event.title}
+                    </h3>
 
-                  <p className="text-xs text-gray-400 mb-2">
-                    ⏰{" "}
+                    <span
+                      className={`text-[10px] px-2 py-1 rounded-full text-white ${
+                        typeColors[event.event_type]
+                      }`}
+                    >
+                      {event.event_type}
+                    </span>
+                  </div>
+
+                  <p className="text-xs text-gray-500 mt-1">
                     {new Date(event.start_date).toLocaleTimeString([], {
                       hour: "2-digit",
-                      minute: "2-digit"
+                      minute: "2-digit",
                     })}{" "}
                     →{" "}
                     {new Date(event.end_date).toLocaleTimeString([], {
                       hour: "2-digit",
-                      minute: "2-digit"
+                      minute: "2-digit",
                     })}
                   </p>
 
-                  <span className="text-xs px-2 py-1 rounded bg-indigo-600 inline-block mb-2">
-                    {event.event_type}
-                  </span>
-
-                  <p className="text-sm text-gray-300">
-                    {event.description?.trim()
-                      ? event.description
-                      : "No description provided"}
+                  <p className="text-sm text-gray-600 mt-2">
+                    {event.description || "No description provided"}
                   </p>
                 </div>
               ))
@@ -239,7 +423,6 @@ export default function Calendar() {
           </div>
         </div>
       )}
-
     </div>
   );
 }
