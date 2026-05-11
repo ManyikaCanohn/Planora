@@ -3,6 +3,7 @@ import EventCard from "../components/EventCard";
 import EventModal from "../components/EventModal";
 import api from "../api/api";
 import { FiPlus, FiSearch } from "react-icons/fi";
+import Welcome from "../components/Welcome";
 
 const API = "http://localhost:5000/api/events";
 
@@ -40,61 +41,69 @@ export default function EventDashboard() {
   };
 
   return (
-    <div className="p-6 min-h-screen font-mono">
+    <div className="min-h-screen font-mono">
 
-      <div className="flex gap-3 mb-6">
-        
-        <div className="w-full relative max-w-md items-center">
-            <FiSearch className="text-2xl absolute left-3 top-1/2 -translate-y-1/2 text-secondary" />
-            <input
-                placeholder="Search events..."
-                className="border border-secondary p-2 rounded w-full pl-10 pr-4 focus:outline-none font-mono"
-                onChange={(e) => setSearch(e.target.value)}
-          />
+        <div className="mb-7">
+          <Welcome />
         </div>
 
-          <select
-            className="bg-secondary text-white focus:outline-none p-2 rounded"
-            onChange={(e) => setFilter(e.target.value)}
-          >
-            <option value="all">All</option>
-            <option value="draft">Draft</option>
-            <option value="published">Published</option>
-            <option value="completed">Completed</option>
-          </select>
-      </div>
+        <div className="flex gap-3 mb-6">
+            
+        </div>
       
       {/* Header */}
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-4xl text-secondary font-bold">Events</h1>
-        <button
-          onClick={handleCreate}
-          className="flex items-center gap-2 cursor-pointer border border-secondary text-secondary hover:bg-secondary hover:text-white transition px-4 py-2 rounded-xl hover:bg-purple-700"
-        >
-          <FiPlus /> Create Event
-        </button>
-      </div>
+        <div className="flex justify-between items-center mb-8">
+            {/* SEARCH INPUT */}
+          <div className="w-full flex gap-2 relative max-w-md items-center">
+              <FiSearch className="text-2xl absolute left-3 top-1/2 -translate-y-1/2 text-secondary" />
+              <input
+                  placeholder="Search events..."
+                  className="border border-secondary p-2 rounded w-full pl-10 pr-4 focus:outline-none font-mono"
+                  onChange={(e) => setSearch(e.target.value)}
+            />
+            <select
+              className="bg-white text-secondary focus:outline-none p-2 rounded"
+              onChange={(e) => setFilter(e.target.value)}
+            >
+              <option value="all">All</option>
+              <option value="draft">Draft</option>
+              <option value="published">Published</option>
+              <option value="completed">Completed</option>
+            </select>
+          </div>
+          
+
+            {/* CREATE EVENT BUTTON */}
+          <div>
+            <button
+            onClick={handleCreate}
+            className="flex items-center gap-2 cursor-pointer border border-secondary text-secondary hover:bg-secondary hover:text-white transition px-4 py-2 rounded-xl hover:bg-purple-700"
+            >
+            <FiPlus /> Create Event
+          </button>
+          </div>
+        </div>
 
       {/* Grid */}
-      <div className="grid md:grid-cols-3 gap-6">
-        {events.map((e) => (
-          <EventCard
-            key={e.id}
-            event={e}
-            refresh={fetchEvents}
-            onEdit={handleEdit}
-          />
-        ))}
-      </div>
+        <div className="grid md:grid-cols-3 gap-6">
+          {events.map((e) => (
+            <EventCard
+              key={e.id}
+              event={e}
+              refresh={fetchEvents}
+              onEdit={handleEdit}
+            />
+          ))}
+        </div>
 
-      {/* Modal */}
-      {open && (
-        <EventModal
-          event={selected}
-          onClose={() => setOpen(false)}
-          refresh={fetchEvents}
-        />
-      )}
+        {/* Modal */}
+        {open && (
+          <EventModal
+            event={selected}
+            onClose={() => setOpen(false)}
+            refresh={fetchEvents}
+          />
+        )}
     </div>
   );
   }

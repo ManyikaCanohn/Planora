@@ -8,6 +8,9 @@ import eventRoutes from "./routes/eventRoutes.js";
 import authRoutes from "./routes/authRoutes.js";
 import inviteRoutes from "./routes/inviteRoutes.js";
 import analyticsRoutes from "./routes/analyticsRoutes.js";
+import participantRoutes from "./routes/participantRoutes.js";
+import messageRoutes from "./routes/messageRoutes.js";
+
 
 dotenv.config();
 
@@ -26,6 +29,8 @@ app.use("/api/auth", authRoutes);
 app.use("/api/events", eventRoutes);
 app.use("/api/invite", inviteRoutes);
 app.use("/api/analytics", analyticsRoutes);
+app.use("/api/participants", participantRoutes);
+app.use("/api/messages", messageRoutes);
 
 app.get("/", (req, res) => {
   res.send("Planora API Running...");

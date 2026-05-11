@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import axios from "axios";
+import api from "../api/api";
 import {
-  FaCalendarAlt, FaUsers, FaCheckCircle, FaClock, FaPlus, FaEnvelope
+  FaCalendarAlt, FaUsers, FaPlus, FaEnvelope, FaSync
 } from "react-icons/fa";
-import { MdEventAvailable, MdPendingActions } from "react-icons/md";
+import { MdEventAvailable } from "react-icons/md";
 import { motion } from "framer-motion";
 
 import {
@@ -11,20 +11,29 @@ import {
   LineChart, Line
 } from "recharts";
 
-const API = "http://localhost:5000/api";
-
 export default function EventStats() {
-
   const [data, setData] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  // ================= FETCH =================
+  const fetchStats = async () => {
+    try {
+      setLoading(true);
+      const res = await api.get("/events/stats"); // MUST be user-protected backend
+      setData(res.data);
+    } catch (err) {
+      console.error("Stats error:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    axios.get(`${API}/analytics`)
-      .then(res => setData(res.data))
-      .catch(err => console.error(err));
+    fetchStats();
   }, []);
 
   // ================= LOADING =================
-  if (!data) {
+  if (loading) {
     return (
       <div className="flex justify-center items-center h-[60vh] gap-2">
         <span className="w-2 h-2 bg-indigo-500 rounded-full animate-bounce"></span>
@@ -34,45 +43,51 @@ export default function EventStats() {
     );
   }
 
-  // ================= REAL STATS =================
+  // ================= SAFE DATA =================
+  const attendance = data?.attendance || [];
+  const eventsPerMonth = data?.eventsPerMonth || [];
+
+  const totalAttendance = attendance.reduce(
+    (sum: number, e: any) => sum + (e.attendees || 0),
+    0
+  );
+
+  // ================= STATS =================
   const stats = [
     {
       label: "Total Events",
-      value: data.totalEvents,
+      value: data?.totalEvents || 0,
       icon: FaCalendarAlt,
       color: "text-indigo-500"
     },
     {
       label: "Active Events",
-      value: data.activeEvents,
+      value: data?.activeEvents || 0,
       icon: MdEventAvailable,
       color: "text-green-500"
     },
     {
       label: "Total Attendance",
-      value: data.attendance.reduce((s: number, e: any) => s + e.attendees, 0),
+      value: totalAttendance,
       icon: FaUsers,
       color: "text-blue-500"
     }
   ];
 
-  const COLORS = ["#6366F1", "#8B5CF6", "#22C55E", "#F59E0B"];
-
-  const attendanceData = data.attendance.map((e: any) => ({
-    name: e.title,
-    attendees: e.attendees
+  // ================= CHART DATA =================
+  const attendanceData = attendance.map((e: any) => ({
+    name: e.title || "Event",
+    attendees: e.attendees || 0
   }));
 
-  const eventGrowthData = data.eventsPerMonth.map((e: any) => ({
+  const eventGrowthData = eventsPerMonth.map((e: any) => ({
     name: `Month ${e.month}`,
-    events: e.count
+    events: e.count || 0
   }));
 
-  const eventTypes = data.eventTypes;
-
+  // ================= UI =================
   return (
-    <div className="space-y-6 font-mono min-h-screen">
-
+    <div className="space-y-6 min-h-screen">
       {/* ================= STATS ================= */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         {stats.map((s, i) => (
@@ -102,7 +117,12 @@ export default function EventStats() {
               <XAxis dataKey="name" />
               <YAxis />
               <Tooltip />
-              <Line type="monotone" dataKey="attendees" stroke="#6366F1" strokeWidth={3} />
+              <Line
+                type="monotone"
+                dataKey="attendees"
+                stroke="#6366F1"
+                strokeWidth={3}
+              />
             </LineChart>
           </ResponsiveContainer>
         </div>
@@ -120,80 +140,22 @@ export default function EventStats() {
             </BarChart>
           </ResponsiveContainer>
         </div>
-
-      </div>
-
-      {/* ================= EVENT TYPES ================= */}
-      <div className="bg-white shadow rounded-2xl p-5">
-        <h2 className="font-semibold mb-4">Event Categories</h2>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          {eventTypes.map((e: any, i: number) => (
-            <div
-              key={i}
-              className="flex items-center justify-between bg-gray-50 p-3 rounded-xl"
-              style={{
-                borderLeft: `5px solid ${COLORS[i % COLORS.length]}`
-              }}
-            >
-              <span className="font-medium">{e.event_type}</span>
-              <span className="font-bold">{e.count}</span>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* ================= ACTIVITY ================= */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-        <div className="bg-white shadow rounded-2xl p-5">
-          <h2 className="font-semibold mb-4 flex items-center gap-2">
-            <FaClock /> Latest Activity
-          </h2>
-
-          <ul className="space-y-2 text-sm">
-            {data.latestActivity?.map((a: string, i: number) => (
-              <li key={i} className="text-gray-600">• {a}</li>
-            ))}
-          </ul>
-        </div>
-
-        <div className="bg-white shadow rounded-2xl p-5">
-          <h2 className="font-semibold mb-4 flex items-center gap-2">
-            <MdPendingActions /> Pending Approvals
-          </h2>
-
-          <ul className="space-y-2 text-sm">
-            {data.pendingApprovals?.map((p: string, i: number) => (
-              <li key={i} className="flex justify-between items-center">
-                <span className="text-gray-600">{p}</span>
-                <FaCheckCircle className="text-yellow-500 cursor-pointer" />
-              </li>
-            ))}
-          </ul>
-        </div>
-
       </div>
 
       {/* ================= QUICK ACTIONS ================= */}
-      <div className="bg-white shadow rounded-2xl p-5">
-        <h2 className="font-semibold mb-4">Quick Actions</h2>
+      <div className="flex flex-wrap gap-3 justify-center">
+        <button className="bg-indigo-600 text-white px-4 py-2 rounded-xl flex items-center gap-2 hover:scale-105 transition">
+          <FaPlus /> Create Event
+        </button>
 
-        <div className="flex flex-wrap gap-3">
-          <button className="bg-indigo-600 text-white px-4 py-2 rounded-xl flex items-center gap-2">
-            <FaPlus /> Create Event
-          </button>
+        <button className="bg-blue-600 text-white px-4 py-2 rounded-xl flex items-center gap-2 hover:scale-105 transition">
+          <FaEnvelope /> Send Message
+        </button>
 
-          <button className="bg-blue-600 text-white px-4 py-2 rounded-xl flex items-center gap-2">
-            <FaEnvelope /> Send Message
-          </button>
-
-          <button className="bg-green-600 text-white px-4 py-2 rounded-xl flex items-center gap-2">
-            <FaUsers /> View Attendees
-          </button>
-        </div>
+        <button className="bg-green-600 text-white px-4 py-2 rounded-xl flex items-center gap-2 hover:scale-105 transition">
+          <FaUsers /> View Attendees
+        </button>
       </div>
-
     </div>
   );
 }

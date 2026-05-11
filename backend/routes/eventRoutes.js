@@ -8,7 +8,9 @@ import {
 
 import { authMiddleware } from "../middleware/authMiddleware.js";
 import { getInviteByCode } from "../controllers/inviteController.js";
-import { getEventById } from "../controllers/eventController.js";
+import { getEventById } from "../controllers/eventController.js"; 
+import { getEventStats } from "../controllers/eventController.js";
+
 
 const router = express.Router();
 
@@ -17,6 +19,7 @@ router.use(authMiddleware);
 
 router.post("/", createEvent);
 router.get("/", getEvents);
+router.get("/stats", authMiddleware, getEventStats);
 
 router.get("/invite/:code", getInviteByCode); // 🔥 FIXED
 
@@ -24,5 +27,6 @@ router.get("/:id", getEventById); // 🔥 SAFE NOW
 
 router.put("/:id", updateEvent);
 router.delete("/:id", deleteEvent);
+
 
 export default router;

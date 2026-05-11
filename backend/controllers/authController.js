@@ -25,7 +25,6 @@ export const register = async (req, res) => {
 };
 
 // LOGIN
-
 export const login = async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -72,9 +71,14 @@ export const login = async (req, res) => {
 
     // 🔥 RESPONSE
     res.json({
-      message: "Login successful",
-      user
-    });
+  message: "✅✅✅ Login successful",
+    user: {
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    }
+  });
 
     console.log("LOGIN RESPONSE SENT ✅");
 
@@ -105,7 +109,6 @@ export const createInvite = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
-
 
 export const getInvite = async (req, res) => {
   try {
@@ -150,10 +153,16 @@ export const registerToEvent = async (req, res) => {
 export const getParticipants = async (req, res) => {
   try {
     const { eventId } = req.params;
+    const userId = req.user.id;
 
     const [rows] = await db.execute(
-      "SELECT * FROM event_registrations WHERE event_id = ?",
-      [eventId]
+      `
+      SELECT er.*
+      FROM event_registrations er
+      JOIN events e ON er.event_id = e.id
+      WHERE er.event_id = ? AND e.created_by = ?
+      `,
+      [eventId, userId]
     );
 
     res.json(rows);
@@ -162,21 +171,49 @@ export const getParticipants = async (req, res) => {
     res.status(500).json({ error: err.message });
   }
 };
-export const updateParticipantStatus = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { status } = req.body;
 
-    await db.execute(
-      "UPDATE event_registrations SET status = ? WHERE id = ?",
-      [status, id]
-    );
+// UPDATE STATUS + EMAIL NOTIFICATION 
+export const updateParticipantStatus = async (req, res) => { 
+  const { id } = req.params; 
+  const { status } = req.body; 
+  try { 
+     // 1. Get participant + event info 
+     const [rows] = await db.query(
+        `
+        SELECT ep.*, e.title AS event_name
+        FROM event_participants ep
+        LEFT JOIN events e ON ep.event_id = e.id
+        WHERE ep.id = ?
+        `,
+        [id]
+      );
 
-    res.json({ message: "Status updated" });
+      if (!rows.length) 
+        { return res.status(404).json({ message: "Participant not found" }); 
+      } 
 
-  } catch (err) {
-    res.status(500).json({ error: err.message });
-  }
+      const participant = rows[0];  
+
+     // Update DB 
+     await db.query( 
+        "UPDATE event_participants SET status = ? WHERE id = ?", 
+         [status, id] 
+      ); 
+
+     // 3. Send email 
+      await sendStatusEmail( 
+        participant.email, 
+        participant.name, 
+        status, 
+        participant.event_name
+      ); 
+      
+      res.json({ 
+        message: "Status updated + email sent" 
+      }); } catch (err) { 
+        console.error("UPDATE ERROR:", err); 
+        res.status(500).json({ message: "Failed to update status" });
+       } 
 };
 
 export const adminOnly = (req, res, next) => {
@@ -189,3 +226,162 @@ export const adminOnly = (req, res, next) => {
   next();
 };
 
+export const getMe = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    const [rows] = await db.execute(
+      "SELECT id, name, email, role FROM users WHERE id = ?",
+      [userId]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    return res.json({
+      user: rows[0],
+    });
+
+  } catch (error) {
+    console.error("GET ME ERROR:", error.message);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const getAnalytics = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // =========================
+    // TOTAL EVENTS (per user)
+    // =========================
+    const [events] = await db.execute(
+      "SELECT COUNT(*) AS total FROM events WHERE created_by = ?",
+      [userId]
+    );
+
+    // =========================
+    // ACTIVE EVENTS (per user)
+    // =========================
+    const [active] = await db.execute(
+      "SELECT COUNT(*) AS active FROM events WHERE created_by = ? AND status = 'active'",
+      [userId]
+    );
+
+    // =========================
+    // ATTENDANCE PER EVENT (per user)
+    // =========================
+    const [attendance] = await db.execute(
+      `
+      SELECT e.title, COUNT(ep.id) AS attendees
+      FROM events e
+      LEFT JOIN event_participants ep ON e.id = ep.event_id
+      WHERE e.created_by = ?
+      GROUP BY e.id
+      `,
+      [userId]
+    );
+
+    // =========================
+    // EVENTS PER MONTH (per user)
+    // =========================
+    const [eventsPerMonth] = await db.execute(
+      `
+      SELECT MONTH(created_at) AS month, COUNT(*) AS count
+      FROM events
+      WHERE created_by = ?
+      GROUP BY MONTH(created_at)
+      ORDER BY month
+      `,
+      [userId]
+    );
+
+    // =========================
+    // EVENT TYPES (per user)
+    // =========================
+    const [eventTypes] = await db.execute(
+      `
+      SELECT event_type, COUNT(*) AS count
+      FROM events
+      WHERE created_by = ?
+      GROUP BY event_type
+      `,
+      [userId]
+    );
+
+    res.json({
+      totalEvents: events[0].total,
+      activeEvents: active[0].active,
+      attendance,
+      eventsPerMonth,
+      eventTypes
+    });
+
+  } catch (err) {
+    console.log("ANALYTICS ERROR:", err);
+    res.status(500).json({ message: "Failed to fetch analytics" });
+  }
+};
+
+export const getEventStats = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // ======================
+    // TOTAL EVENTS
+    // ======================
+    const [total] = await db.execute(
+      "SELECT COUNT(*) AS total FROM events WHERE created_by = ?",
+      [userId]
+    );
+
+    // ======================
+    // ACTIVE EVENTS
+    // ======================
+    const [active] = await db.execute(
+      "SELECT COUNT(*) AS active FROM events WHERE created_by = ? AND status = 'active'",
+      [userId]
+    );
+
+    // ======================
+    // ATTENDANCE PER EVENT
+    // ======================
+    const [attendance] = await db.execute(
+      `
+      SELECT e.title, COUNT(ep.id) AS attendees
+      FROM events e
+      LEFT JOIN event_participants ep ON e.id = ep.event_id
+      WHERE e.created_by = ?
+      GROUP BY e.id
+      ORDER BY attendees DESC
+      `,
+      [userId]
+    );
+
+    // ======================
+    // EVENTS PER MONTH
+    // ======================
+    const [eventsPerMonth] = await db.execute(
+      `
+      SELECT MONTH(created_at) AS month, COUNT(*) AS count
+      FROM events
+      WHERE created_by = ?
+      GROUP BY MONTH(created_at)
+      ORDER BY month
+      `,
+      [userId]
+    );
+
+    res.json({
+      totalEvents: total[0].total,
+      activeEvents: active[0].active,
+      attendance,
+      eventsPerMonth
+    });
+
+  } catch (err) {
+    console.log("STATS ERROR:", err);
+    res.status(500).json({ message: "Failed to fetch stats" });
+  }
+};

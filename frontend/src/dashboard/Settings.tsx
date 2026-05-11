@@ -6,9 +6,27 @@ import {
   FiBell,
   FiClock,
 } from "react-icons/fi"
+import { useNavigate } from "react-router-dom";
+  import Swal from "sweetalert2";
 
 const Settings = () => {
   const { user, logout, loading } = useAuth()
+  const navigate = useNavigate();
+
+  const handleSignOut = async () => {
+    const result = await Swal.fire({
+      title: "Sign out?",
+      text: "You will need to login again.",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonText: "Yes, sign out",
+    });
+
+    if (result.isConfirmed) {
+      await logout();       // ✅ handles user clearing properly
+      navigate("/login");   // ✅ redirect
+    }
+  };
 
   if (loading) {
     return (
@@ -41,7 +59,7 @@ const Settings = () => {
           {initial}
         </div>
 
-        <h2 className="text-xl font-bold">
+        <h2 className="text-xl text-secondary font-bold">
           {user?.name}
         </h2>
 
@@ -54,7 +72,7 @@ const Settings = () => {
         </div>
 
         <button
-          onClick={logout}
+          onClick={handleSignOut}
           className="mt-6 w-full py-2 bg-red-600 hover:bg-red-700 rounded-lg text-white font-semibold transition"
         >
           Logout
@@ -72,10 +90,10 @@ const Settings = () => {
           </h3>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-secondary">
-            <InfoCard icon={<FiUser />} label="Full Name" value={user?.name} />
-            <InfoCard icon={<FiMail />} label="Email Address" value={user?.email} />
-            <InfoCard icon={<FiShield />} label="Account Type" value="Organizer" />
-            <InfoCard icon={<FiClock />} label="Member Since" value="Recently" />
+            <InfoCard icon={<FiUser />} label="Full Name"  value={<span className="font-semibold text-secondary">{user?.name}</span>} />
+            <InfoCard icon={<FiMail />} label="Email Address" value={<span className="font-semibold text-secondary">{user?.email}</span>} />
+            <InfoCard icon={<FiShield />} label="Account Type" value={<span className="font-semibold text-secondary">Organizer</span>} />
+            <InfoCard icon={<FiClock />} label="Member Since" value={<span className="font-semibold text-secondary">Recently</span>} />
           </div>
         </div>
 

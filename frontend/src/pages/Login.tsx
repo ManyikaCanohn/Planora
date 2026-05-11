@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { loginUser } from "../api/auth";
-import { setToken } from "../utils/auth";
 import { NavLink, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import { FaGoogle, FaFacebookF} from "react-icons/fa"
@@ -15,48 +14,48 @@ export default function Login() {
 
 
   const handleLogin = async (e: React.FormEvent) => {
-  e.preventDefault();
+      e.preventDefault();
 
-  if (!email || !password) {
-    Swal.fire({
-      icon: "error",
-      title: "Missing Fields",
-      text: "Please fill in email and password",
-    });
-    return;
-  }
+      if (!email || !password) {
+        Swal.fire({
+          icon: "error",
+          title: "Missing Fields",
+          text: "Please fill in email and password",
+        });
+        return;
+      }
 
-  try {
-    setLoading(true);
+      try {
+        setLoading(true);
 
-    const res = await loginUser({ email, password });
+        const res = await loginUser({ email, password });
 
-    console.log("LOGIN SUCCESS:", res);
+        console.log("LOGIN SUCCESS:", res);
 
-    const user = res.user; // ✅ FIXED
+        const user = res.user; // ✅ FIXED
 
-    Swal.fire({
-      icon: "success",
-      title: "Login Successful 🎉",
-      timer: 1500,
-      showConfirmButton: false,
-    });
+        Swal.fire({
+          icon: "success",
+          title: "Login Successful 🎉",
+          timer: 1500,
+          showConfirmButton: false,
+        });
 
-    navigate("/dashboard");
+        navigate("/dashboard");
 
-  } catch (err: any) {
-    console.log("FULL ERROR:", err);
-    console.log("ERROR DATA:", err.response?.data);
+      } catch (err: any) {
+        console.log("FULL ERROR:", err);
+        console.log("ERROR DATA:", err.response?.data);
 
-    Swal.fire({
-      icon: "error",
-      title: "Login Failed",
-      text: err.response?.data?.message || "Invalid credentials",
-    });
-  } finally {
-    setLoading(false);
-  }
-};
+        Swal.fire({
+          icon: "error",
+          title: "Login Failed",
+          text: err.response?.data?.message || "Invalid credentials",
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
 
   return (
     <section className="min-h-screen flex items-center justify-center bg-gradient-to-r from-purple-800 to-blue-200 px-4">

@@ -1,20 +1,17 @@
 import db from "../config/db.js";
 import crypto from "crypto";
 
-const generateCode = () => {
-  return crypto.randomBytes(4).toString("hex");
-};
+const generateCode = () => crypto.randomBytes(4).toString("hex");
 
 export const createEvent = async (req, res) => {
   try {
-    console.log("USER FROM JWT:", req.user);
-
     if (!req.user?.id) {
       return res.status(401).json({ message: "Unauthorized user" });
     }
 
     const data = req.body;
     const inviteCode = generateCode();
+    const userId = req.user.id;
 
     const sql = `
       INSERT INTO events 
@@ -32,7 +29,7 @@ export const createEvent = async (req, res) => {
       data.longitude || null,
       data.start_date || null,
       data.end_date || null,
-      Number(req.user.id),
+      userId,
       inviteCode
     ]);
 
@@ -42,19 +39,26 @@ export const createEvent = async (req, res) => {
     });
 
   } catch (err) {
-    console.error("CREATE EVENT ERROR:", err);
     res.status(500).json({ error: err.message });
   }
 };
 
 export const deleteEvent = async (req, res) => {
   try {
-    await db.execute("DELETE FROM events WHERE id=?", [req.params.id]);
+    const userId = req.user.id;
+
+    const [result] = await db.execute(
+      "DELETE FROM events WHERE id=? AND created_by=?",
+      [req.params.id, userId]
+    );
+
+    if (result.affectedRows === 0) {
+      return res.status(403).json({ message: "Not allowed or event not found" });
+    }
 
     res.json({ message: "Event deleted" });
 
   } catch (err) {
-    console.error(err);
     res.status(500).json({ error: err.message });
   }
 };
@@ -71,7 +75,6 @@ export const getEvents = async (req, res) => {
     res.json(rows);
 
   } catch (err) {
-    console.error(err);
     res.status(500).json({ error: err.message });
   }
 };
@@ -80,16 +83,17 @@ export const updateEvent = async (req, res) => {
   try {
     const { id } = req.params;
     const data = req.body;
+    const userId = req.user.id;
 
     const sql = `
       UPDATE events SET
       title=?, description=?, event_type=?, status=?,
       location_name=?, latitude=?, longitude=?, event_link=?,
       start_date=?, end_date=?
-      WHERE id=?
+      WHERE id=? AND created_by=?
     `;
 
-    await db.execute(sql, [
+    const [result] = await db.execute(sql, [
       data.title,
       data.description,
       data.event_type,
@@ -100,13 +104,17 @@ export const updateEvent = async (req, res) => {
       data.event_link,
       data.start_date,
       data.end_date,
-      id
+      id,
+      userId
     ]);
+
+    if (result.affectedRows === 0) {
+      return res.status(403).json({ message: "Not allowed" });
+    }
 
     res.json({ message: "Event updated" });
 
   } catch (err) {
-    console.error(err);
     res.status(500).json({ error: err.message });
   }
 };
@@ -114,30 +122,71 @@ export const updateEvent = async (req, res) => {
 export const getEventById = async (req, res) => {
   try {
     const { id } = req.params;
+    const userId = req.user.id;
 
     const [eventRows] = await db.execute(
-      "SELECT * FROM events WHERE id = ?",
-      [id]
+      "SELECT * FROM events WHERE id = ? AND created_by = ?",
+      [id, userId]
     );
 
     if (!eventRows.length) {
       return res.status(404).json({ message: "Event not found" });
     }
 
-    const event = eventRows[0];
-
     const [participants] = await db.execute(
-      "SELECT * FROM event_participants WHERE event_id = ?",
+      `SELECT * FROM event_participants 
+       WHERE event_id = ?`,
       [id]
     );
 
     res.json({
-      ...event,
+      ...eventRows[0],
       attendees: participants
     });
 
   } catch (err) {
-    console.error(err);
+    res.status(500).json({ error: err.message });
+  }
+};
+
+export const getEventStats = async (req, res) => {
+  try {
+    const userId = req.user.id;
+
+    // Total events
+    const [events] = await db.execute(
+      "SELECT COUNT(*) AS totalEvents FROM events WHERE created_by = ?",
+      [userId]
+    );
+
+    // Total participants
+    const [participants] = await db.execute(
+      `
+      SELECT COUNT(*) AS totalParticipants
+      FROM event_participants ep
+      JOIN events e ON ep.event_id = e.id
+      WHERE e.created_by = ?
+      `,
+      [userId]
+    );
+
+    // Upcoming events
+    const [upcoming] = await db.execute(
+      `
+      SELECT COUNT(*) AS upcomingEvents
+      FROM events
+      WHERE created_by = ? AND start_date > NOW()
+      `,
+      [userId]
+    );
+
+    res.json({
+      totalEvents: events[0].totalEvents,
+      totalParticipants: participants[0].totalParticipants,
+      upcomingEvents: upcoming[0].upcomingEvents,
+    });
+
+  } catch (err) {
     res.status(500).json({ error: err.message });
   }
 };

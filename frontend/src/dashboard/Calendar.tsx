@@ -1,11 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import axios from "axios";
-import {
-  FaMoon,
-  FaBell,
-  FaUserCircle,
-} from "react-icons/fa";
 import { FiClock } from "react-icons/fi";
+import { MdNavigateBefore, MdNavigateNext } from "react-icons/md";
 
 type Event = {
   id: number;
@@ -40,7 +36,6 @@ const formatCountdown = (ms: number) => {
 export default function Calendar() {
   const [events, setEvents] = useState<Event[]>([]);
   const [currentDate, setCurrentDate] = useState(new Date());
-  const [view, setView] = useState("Monthly");
   const [selectedDay, setSelectedDay] = useState<Date | null>(null);
   const [reminders, setReminders] = useState<Event[]>([]);
   const [now, setNow] = useState(new Date());
@@ -93,8 +88,8 @@ export default function Calendar() {
 
   // ================== COUNTDOWN======================
   useEffect(() => {
-  const interval = setInterval(() => {
-    setNow(new Date());
+    const interval = setInterval(() => {
+      setNow(new Date());
   }, 1000);
 
   return () => clearInterval(interval);
@@ -125,17 +120,6 @@ export default function Calendar() {
       (d.getTime() - today.getTime()) / (1000 * 60 * 60 * 24);
     return diffDays >= 0 && diffDays <= 7;
   });
-
-    const busiestDay = (() => {
-      const map: Record<string, number> = {};
-
-      events.forEach((e) => {
-        const d = new Date(e.start_date).toDateString();
-        map[d] = (map[d] || 0) + 1;
-      });
-
-      return Object.entries(map).sort((a, b) => b[1] - a[1])[0];
-    })();
 
   // ================= CALENDAR GRID =================
   const monthMatrix = useMemo(() => {
@@ -176,90 +160,63 @@ export default function Calendar() {
   };
 
   return (
-    <div className="min-h-screen  from-indigo-100 via-purple-100 to-indigo-200 flex">
+    <div className="min-h-screen from-indigo-100 via-purple-100 to-indigo-200 flex">
 
       {/* ================= MAIN ================= */}
-      <main className="flex-1 p-6 font-mono">
+      <main className="flex-1">
 
         {/* TOP BAR */}
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex justify-between items-center mb-4">
           <div>
-            <h1 className="text-2xl font-bold text-gray-800">
-              Planora Calendar
+            <h1 className="text-3xl uppercase text-secondary font-bold text-gray-800">
+              Your event Calendar
             </h1>
             <p className="text-sm text-gray-500">
-              Click a day to view events
+              Click a day to view event details.
             </p>
           </div>
-
-          <div className="flex items-center gap-3">
-            <div className="flex bg-white/50 rounded-full p-1">
-              {["Daily", "Weekly", "Monthly"].map((v) => (
-                <button
-                  key={v}
-                  onClick={() => setView(v)}
-                  className={`px-3 py-1 text-sm rounded-full transition ${
-                    view === v ? "bg-indigo-600 text-white" : "text-gray-600"
-                  }`}
-                >
-                  {v}
-                </button>
-              ))}
-            </div>
-
-            <FaMoon className="text-gray-600" />
-            <FaBell className="text-gray-600" />
-            <FaUserCircle className="text-2xl text-gray-700" />
-          </div>
         </div>
 
 
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-3 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
 
-        {/* 1. TODAY SUMMARY */}
-        <div className="bg-white/60 p-4 rounded-2xl shadow">
-          <p className="text-xs text-gray-500">Today Summary</p>
-          <h2 className="text-lg font-bold">{todayEvents.length} Events</h2>
-        </div>
-
-        {/* 2. NEXT EVENT */}
-        <div className="bg-white/60 p-4 rounded-2xl shadow flex items-center gap-2">
-          <FiClock />
-          <div>
-            <p className="text-xs text-gray-500">Next Event</p>
-            <h2 className="text-sm font-bold">
-              {upcomingEvent
-                ? upcomingEvent.title
-                : "No upcoming events"}
-            </h2>
-          </div>
-        </div>
-
-        {/* 3. COUNTDOWN */}
-        <div className="bg-white/60 p-4 rounded-2xl shadow">
-          <p className="text-xs text-gray-500">Countdown</p>
-          <h2 className="text-sm font-bold">
-              {upcomingEvent
-                ? formatCountdown(upcomingEvent.diff)
-                : "--"}
-            </h2>
-        </div>
-
-        {/* 4. WEEK SNAPSHOT */}
-        <div className="bg-white/60 p-4 rounded-2xl shadow">
-          <p className="text-xs text-gray-500">This Week</p>
-          <h2 className="text-sm font-bold">
-            {weekEvents.length} Events
-          </h2>
-        </div>
-
-          {/* 5. BILLEST DAY */}
+          {/* 1. TODAY SUMMARY */}
           <div className="bg-white/60 p-4 rounded-2xl shadow">
-            <p className="text-xs text-gray-500">Busiest Day</p>
-            <h2 className="text-sm font-bold">
-              {busiestDay ? busiestDay[0] : "N/A"}
+            <p className="text-xs text-gray-500">Today Summary</p>
+            <h2 className="text-secondary font-bold">{todayEvents.length} Events</h2>
+          </div>
+
+          {/* 2. NEXT EVENT */}
+          <div className="bg-white/60 p-4 rounded-2xl shadow flex items-center gap-2">
+            {/* <FiClock /> */}
+            <div>
+              <p className="text-xs text-gray-500">Next Event</p>
+              <h2 className="text-secondary font-bold">
+                {upcomingEvent
+                  ? upcomingEvent.title
+                  : "No upcoming events"}
+              </h2>
+            </div>
+          </div>
+
+          {/* 3. COUNTDOWN */}
+          <div className="bg-white/60 p-4 rounded-2xl shadow">
+            <p className="text-xs text-gray-500">Countdown</p>
+            <h2 className="text-secondary font-bold">
+                {upcomingEvent
+                  ? formatCountdown(upcomingEvent.diff)
+                  : "--"}
+              </h2>
+          </div>
+
+          {/* 4. WEEK SNAPSHOT */}
+          <div className="bg-white/60 p-4 rounded-2xl shadow">
+            <p className="text-xs text-gray-500">This Week</p>
+            <h2 className="text-secondary font-bold">
+              {weekEvents.length} Events
             </h2>
           </div>
+
 
         </div>
 
@@ -267,20 +224,22 @@ export default function Calendar() {
         <div className="flex justify-between items-center mb-4">
           <button
             onClick={() => changeMonth(-1)}
-            className="px-3 py-1 bg-white/60 rounded-xl shadow"
+            className="px-3 py-1 bg-white/60 text-secondary rounded-xl shadow flex items-center gap-2"
           >
+            <MdNavigateBefore />
             Prev
           </button>
 
-          <h2 className="text-lg font-semibold text-gray-700">
+          <h2 className="text-lg font-semibold text-secondary uppercase">
             {monthLabel}
           </h2>
 
           <button
             onClick={() => changeMonth(1)}
-            className="px-3 py-1 bg-white/60 rounded-xl shadow"
+            className="px-3 py-1 bg-white/60 rounded-xl text-secondary shadow flex items-center gap-2"
           >
             Next
+            <MdNavigateNext />
           </button>
         </div>
 
@@ -302,9 +261,9 @@ export default function Calendar() {
               <div
                 key={i}
                 onClick={() => setSelectedDay(date)}
-                className="bg-white/50 backdrop-blur p-2 rounded-xl min-h-[100px] shadow-sm hover:shadow-md transition cursor-pointer"
+                className="bg-white/50 backdrop-blur p-2 rounded-xl min-h-[80px] shadow-sm hover:shadow-md transition cursor-pointer"
               >
-                <div className="text-sm font-semibold text-gray-700 mb-2">
+                <div className="text-lg font-semibold text-secondary mb-2">
                   {date.getDate()}
                 </div>
 

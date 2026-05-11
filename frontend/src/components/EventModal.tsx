@@ -111,26 +111,26 @@ export default function EventModal({ event, onClose, refresh }: any) {
       <div className="w-full max-w-2xl bg-white/90 backdrop-blur-xl rounded-2xl shadow-2xl overflow-hidden">
 
         {/* HEADER */}
-        <div className="bg-gradient-to-r from-purple-600 to-blue-500 p-5 text-white">
+        <div className="bg-dark text-secondary p-5">
           <h2 className="text-2xl font-bold font-mono">
             {event ? "Edit Event" : "Create Event"}
           </h2>
-          <p className="text-sm opacity-80">
+          <p className="text-sm opacity-80 text-gray-400">
             Fill in the details below
           </p>
         </div>
 
         {/* BODY */}
-        <div className="p-6 space-y-5 font-mono text-secondary max-h-[75vh] overflow-y-auto">
+        <div className="p-6 space-y-5 font-mono text-dark max-h-[75vh] overflow-y-auto">
 
           {/* TITLE */}
           <div>
-            <label className="flex items-center gap-2 text-sm text-secondary mb-1">
-              <FaHeading /> Title
+            <label className="flex items-center gap-2 text-sm  mb-1">
+              <FaHeading /> Event Name
             </label>
             <input
-              className={`w-full border border-2 rounded border-secondary p-2 outline-none ${
-                errors.title ? "border-red-500" : "border-gray-300"
+              className={`w-full border border-2 rounded  p-2 outline-none ${
+                errors.title ? "border-red-500" : "border-dark"
               }`}
               value={form.title}
               onChange={(e) =>
@@ -146,8 +146,8 @@ export default function EventModal({ event, onClose, refresh }: any) {
               <FaAlignLeft /> Description
             </label>
             <textarea
-              className={`w-full border border-2 rounded border-secondary p-2 outline-none ${
-                errors.description ? "border-red-500" : "border-gray-300"
+              className={`w-full border border-2 rounded p-2 outline-none ${
+                errors.description ? "border-red-500" : "border-dark"
               }`}
               value={form.description}
               onChange={(e) =>
@@ -167,8 +167,8 @@ export default function EventModal({ event, onClose, refresh }: any) {
               </label>
               <input
                 type="datetime-local"
-                className={`w-full border border border-2 rounded border-secondary p-2 outline-none ${
-                  errors.start_date ? "border-red-500" : "border-gray-300"
+                className={`w-full border border border-2 rounded p-2 outline-none ${
+                  errors.start_date ? "border-red-500" : "border-dark"
                 }`}
                 value={form.start_date}
                 onChange={(e) =>
@@ -186,8 +186,8 @@ export default function EventModal({ event, onClose, refresh }: any) {
               </label>
               <input
                 type="datetime-local"
-                className={`w-full border border border-2 rounded border-secondary p-2 outline-none ${
-                  errors.end_date ? "border-red-500" : "border-gray-300"
+                className={`w-full border border border-2 rounded p-2 outline-none ${
+                  errors.end_date ? "border-red-500" : "border-dark"
                 }`}
                 value={form.end_date}
                 onChange={(e) =>
@@ -207,7 +207,7 @@ export default function EventModal({ event, onClose, refresh }: any) {
                 <FaTag /> Type
               </label>
               <select
-                className="w-full border border border-2 rounded border-secondary p-2 outline-none"
+                className="w-full border border border-2 rounded p-2 outline-none"
                 value={form.event_type}
                 onChange={(e) =>
                   setForm({ ...form, event_type: e.target.value })
@@ -222,7 +222,7 @@ export default function EventModal({ event, onClose, refresh }: any) {
             <div>
               <label className="text-sm mb-1 block">Status</label>
               <select
-                className="w-full border border border-2 rounded border-secondary p-2 outline-none"
+                className="w-full border border border-2 rounded p-2 outline-none"
                 value={form.status}
                 onChange={(e) =>
                   setForm({ ...form, status: e.target.value })
@@ -265,17 +265,18 @@ export default function EventModal({ event, onClose, refresh }: any) {
         </div>
 
         {/* FOOTER */}
-        <div className="flex justify-end gap-3 p-4 border-t">
+        <div className="flex justify-end gap-3 p-4 border-t-2">
           <button
             onClick={onClose}
-            className="text-gray-500 hover:text-black"
+            className="text-gray-500 hover:text-black cursor-pointer"
           >
             Cancel
           </button>
 
           <button
             onClick={handleSubmit}
-            className="bg-gradient-to-r from-purple-600 to-blue-500 text-white px-5 py-2 rounded-lg hover:scale-105 transition"
+            className="bg-dark cursor-pointer 
+            text-white px-5 py-2 rounded-lg hover:scale-105 transition"
           >
             Save Event
           </button>

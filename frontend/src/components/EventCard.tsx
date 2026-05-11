@@ -1,19 +1,20 @@
-import { FaPenAlt, FaTrashAlt } from "react-icons/fa";
-import { FaPaperPlane, FaTrash } from "react-icons/fa6";
+import { FaTrashAlt } from "react-icons/fa";
+import { FaPaperPlane } from "react-icons/fa6";
 import Swal from "sweetalert2";
+import api from "../api/api";
 
-export default function EventCard({ event, refresh, onEdit }: any) {
+export default function EventCard({ event, refresh }: any) {
 
   const statusColor = {
-    draft: "bg-yellow-500",
-    published: "bg-green-500",
-    completed: "bg-gray-500",
+    draft: "bg-secondary",
+    published: "bg-secondary",
+    completed: "bg-secondary",
   };
 
   const typeColor = {
-    virtual: "bg-blue-500",
-    physical: "bg-orange-500",
-    hybrid: "bg-purple-500",
+    virtual: "bg-secondary",
+    physical: "bg-secondary",
+    hybrid: "bg-secondary",
   };
 
   // =========================
@@ -62,6 +63,44 @@ export default function EventCard({ event, refresh, onEdit }: any) {
     }
   };
 
+  // =========================
+  // DELETE EVENT
+  // =========================
+  const handleDelete = async () => {
+    const confirm = await Swal.fire({
+      title: "Delete Event?",
+      text: "This action cannot be undone!",
+      icon: "warning",
+      showCancelButton: true,
+      confirmButtonColor: "#d33",
+      confirmButtonText: "Yes, delete it",
+    });
+
+    if (!confirm.isConfirmed) return;
+
+    try {
+      await api.delete(`/events/${event.id}`);
+
+      Swal.fire({
+        icon: "success",
+        title: "Deleted!",
+        timer: 1200,
+        showConfirmButton: false,
+      });
+
+      refresh(); // 🔁 reload events
+
+    } catch (err) {
+      console.error("DELETE ERROR:", err);
+
+      Swal.fire({
+        icon: "error",
+        title: "Delete Failed",
+        text: "Something went wrong",
+      });
+    }
+  };
+
   return (
     <div className="bg-white p-5 rounded-2xl shadow-md hover:-translate-y-1 transition-all duration-300">
 
@@ -69,7 +108,7 @@ export default function EventCard({ event, refresh, onEdit }: any) {
       <div className="flex justify-between items-start">
         <h2 className="text-lg text-secondary font-semibold">{event.title}</h2>
 
-        <span className={`text-xs px-2 py-1 rounded ${statusColor[event.status]}`}>
+        <span className={`text-xs text-white px-2 py-1 rounded ${statusColor[event.status]}`}>
           {event.status}
         </span>
       </div>
@@ -81,7 +120,7 @@ export default function EventCard({ event, refresh, onEdit }: any) {
 
       {/* TYPE */}
       <div className="mt-3">
-        <span className={`text-xs px-2 py-1 rounded ${typeColor[event.event_type]}`}>
+        <span className={`text-xs px-2 text-white py-1 rounded ${typeColor[event.event_type]}`}>
           {event.event_type}
         </span>
       </div>
@@ -89,25 +128,22 @@ export default function EventCard({ event, refresh, onEdit }: any) {
       {/* FOOTER ACTIONS */}
       <div className="flex justify-between mt-5 text-sm border-t border-slate-700 pt-3">
 
-        <button
-          onClick={() => onEdit(event)}
-          className="flex items-center gap-2 cursor-pointer transition"
-        >
-          <FaPenAlt />  Edit
+        <button onClick={handleDelete} className="text-red-500 flex items-center gap-2 cursor-pointer hover:text-red-700 transition">
+          <FaTrashAlt />  Delete
         </button>
 
         <button
           onClick={shareInvite}
-          className="text-purple-400 flex items-center gap-2 cursor-pointer hover:text-purple-300 transition"
+          className="text-secondary flex items-center gap-2 cursor-pointer hover:text-purple-700 transition"
         >
           <FaPaperPlane />  Invite
         </button>
 
-        <button className="text-red-400 flex items-center gap-2 cursor-pointer hover:text-red-500 transition">
-          <FaTrashAlt />  Delete
-        </button>
+        
 
       </div>
+
+      
     </div>
   );
 }

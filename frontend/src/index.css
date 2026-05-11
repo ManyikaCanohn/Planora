@@ -27,3 +27,7 @@
   --font-sans: var(--font-main);
   --font-mono: var(--font-mono);
 }
+
+body {
+  font-family: var(--font-mono);
+}

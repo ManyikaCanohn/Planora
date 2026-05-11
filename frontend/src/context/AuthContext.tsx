@@ -27,17 +27,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   // 🔥 GET CURRENT USER (VERY IMPORTANT)
   const fetchUser = async () => {
-    try {
-      const res = await api.get("/auth/me", {
-        withCredentials: true,
-      })
-      setUser(res.data.user)
-    } catch (err) {
-      setUser(null)
-    } finally {
-      setLoading(false)
-    }
+  try {
+    const res = await api.get("/auth/me", {
+      withCredentials: true,
+    })
+
+    console.log("🔥 /auth/me response:", res.data)
+
+    setUser(res.data.user)
+  } catch (err) {
+    setUser(null)
+  } finally {
+    setLoading(false)
   }
+}
 
   useEffect(() => {
     fetchUser()
@@ -66,11 +69,16 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   }
 
   // LOGOUT
-  const logout = async () => {
-    await api.post("/auth/logout", {}, { withCredentials: true })
-    setUser(null)
-    window.location.href = "/login"
+    const logout = async () => {
+  try {
+    await api.post("/auth/logout", {}, { withCredentials: true });
+
+    setUser(null); // ✅ critical
+  } catch (err) {
+    console.error(err);
+    setUser(null); // still clear locally
   }
+};
 
   return (
     <AuthContext.Provider

@@ -1,261 +1,279 @@
-import { useEffect, useState } from "react";
-import api from "../api/api";
+import { useEffect, useMemo, useState } from "react";
+import axios from "axios";
+import { Search, MoreVertical } from "lucide-react";
+import { MdCancel, MdCheckCircle } from "react-icons/md";
 import Swal from "sweetalert2";
-import { FiCheck, FiX, FiClock, FiUsers } from "react-icons/fi";
+import Welcome from "../components/Welcome";
 
-export default function EventAttendees({ eventId }: any) {
-  const [event, setEvent] = useState<any>(null);
-  const [tab, setTab] = useState("pending");
-  const [selected, setSelected] = useState<number[]>([]);
+type Participant = {
+  id: number;
+  event_id: number;
+   event_name: string;
+  name: string;
+  email: string;
+  status: "pending" | "approved" | "rejected";
+  created_at: string;
+};
 
-  // ======================
-  // FETCH EVENT
-  // ======================
-  const fetchEvent = async () => {
-    try {
-      Swal.fire({
-        title: "Loading attendees...",
-        allowOutsideClick: false,
-        didOpen: () => Swal.showLoading(),
-      });
+// 🔥 Avatar from email (simple hash fallback)
+const getAvatar = (email: string) =>
+  `https://api.dicebear.com/7.x/initials/svg?seed=${email}`;
 
-      const res = await api.get(`/events/${eventId}`);
-      setEvent(res.data);
+const Attendees = () => {
+  const [participants, setParticipants] = useState<Participant[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<"all" | "pending" | "approved" | "rejected">("all");
+  const [search, setSearch] = useState("");
+  // const [selected, setSelected] = useState<number[]>([]);
 
-      Swal.close();
-    } catch (err) {
-      Swal.fire({
-        icon: "error",
-        title: "Failed",
-        text: "Could not load attendees",
-      });
-    }
+  // Fetch (UNCHANGED LOGIC)
+    const fetchParticipants = async () => {
+      try {
+        setLoading(true);
+
+        const res = await axios.get(
+          "http://localhost:5000/api/participants",
+          { withCredentials: true }
+        );
+
+        setParticipants(res.data);
+      } catch (err) {
+        console.error("Error fetching participants", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+  const handleError = () => {
+    Swal.fire({
+      icon: "info",
+      title: "Try again later.",
+      text: "Function Under development.",
+    });
   };
+
 
   useEffect(() => {
-    if (eventId) fetchEvent();
-  }, [eventId]);
+    fetchParticipants();
+  }, []);
 
-  useEffect(() => {
-  const fetch = async () => {
-    const res = await api.get(`/events/${eventId}`);
-    console.log("EVENT RESPONSE:", res.data);
-    setEvent(res.data);
-  };
+  // Stats (UNCHANGED LOGIC)
+  const stats = useMemo(() => {
+    return {
+      total: participants.length,
+      pending: participants.filter((p) => p.status === "pending").length,
+      approved: participants.filter((p) => p.status === "approved").length,
+      rejected: participants.filter((p) => p.status === "rejected").length,
+    };
+  }, [participants]);
 
-  fetch();
-}, [eventId]);
-
-  // ======================
-  // UPDATE STATUS (SINGLE)
-  // ======================
-  const updateStatus = async (id: number, status: string) => {
-    try {
-      await api.patch(`/events/${eventId}/attendees/${id}`, { status });
-
-      setEvent((prev: any) => ({
-        ...prev,
-        attendees: prev.attendees.map((a: any) =>
-          a.id === id ? { ...a, status } : a
-        ),
-      }));
-
-    } catch (err) {
-      Swal.fire({
-        icon: "error",
-        title: "Update failed",
-      });
-    }
-  };
-
-  // ======================
-  // BULK ACTIONS
-  // ======================
-  const bulkUpdate = async (status: string) => {
-    try {
-      Swal.fire({
-        title: "Processing...",
-        allowOutsideClick: false,
-        didOpen: () => Swal.showLoading(),
-      });
-
-      await Promise.all(
-        selected.map((id) =>
-          api.patch(`/events/${eventId}/attendees/${id}`, { status })
-        )
+  // Filter + search (UI layer only)
+  const filteredParticipants = useMemo(() => {
+    return participants
+      .filter((p) => {
+        if (filter === "all") return true;
+        return p.status === filter;
+      })
+      .filter((p) =>
+        p.name.toLowerCase().includes(search.toLowerCase()) ||
+        p.email.toLowerCase().includes(search.toLowerCase())
       );
+  }, [participants, filter, search]);
 
-      setEvent((prev: any) => ({
-        ...prev,
-        attendees: prev.attendees.map((a: any) =>
-          selected.includes(a.id) ? { ...a, status } : a
-        ),
-      }));
+  // Update status (UNCHANGED LOGIC)
+ const updateStatus = async (
+  id: number,
+  status: "approved" | "rejected"
+) => {
+  try {
+    await axios.put(
+      `http://localhost:5000/api/participants/${id}`,
+      { status },
+      { withCredentials: true }
+    );
 
-      setSelected([]);
-      Swal.close();
-
-      Swal.fire({
-        icon: "success",
-        title: "Updated successfully",
-        timer: 1500,
-        showConfirmButton: false,
-      });
+    // refresh list
+    fetchParticipants();
 
     } catch (err) {
-      Swal.fire({
-        icon: "error",
-        title: "Bulk update failed",
-      });
+      console.error("Error updating status", err);
     }
   };
 
-  // ======================
-  // FILTERED DATA
-  // ======================
-  const attendees = event?.attendees || [];
+  if (loading) return <p className="p-6 text-gray-500">Loading attendees...</p>;
 
-  const filtered = attendees.filter((a: any) => a.status === tab);
-
-  const toggleSelect = (id: number) => {
-    setSelected((prev) =>
-      prev.includes(id)
-        ? prev.filter((x) => x !== id)
-        : [...prev, id]
-    );
-  };
-
-  // ======================
-  // UI
-  // ======================
   return (
-    <div className="p-4 border rounded-xl bg-white">
+    <div className="space-y-6 min-h-screen">
 
-      {/* HEADER */}
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="flex items-center gap-2 text-xl font-bold text-secondary">
-          <FiUsers /> Attendees
-        </h2>
+      {/* 🔥 HEADER (premium style) */}
+      <div className="flex items-center justify-center gap-10">
 
-        <span className="text-sm text-gray-500">
-          Total: {attendees.length}
-        </span>
+        <div>
+          <h2 className="text-3xl font-bold text-secondary uppercase">
+            Manage your Attendees
+          </h2>
+          <p className="text-sm text-gray-500">
+            Approve, reject, and manage event registrations
+          </p>
+        </div>
+
+        <div>
+            <Welcome />
+        </div>
       </div>
 
-      {/* TABS */}
-      <div className="flex gap-3 mb-4 text-sm">
-        {["pending", "approved", "rejected"].map((t) => (
+      {/* 📊 STATS (clean cards) */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Stat label="Total" value={stats.total} color="bg-secondary" />
+        <Stat label="Pending" value={stats.pending} color="bg-secondary" />
+        <Stat label="Approved" value={stats.approved} color="bg-secondary" />
+        <Stat label="Rejected" value={stats.rejected} color="bg-secondary" />
+      </div>
+
+      {/* 🎯 FILTERS */}
+      <div className="flex justify-between">
+        <div  className="flex flex-wrap gap-2">
+          {["all", "pending", "approved", "rejected"].map((f) => (
           <button
-            key={t}
-            onClick={() => setTab(t)}
-            className={`px-3 py-1 rounded-full border ${
-              tab === t
+            key={f}
+            onClick={() => setFilter(f as any)}
+            className={`px-4 py-2 rounded-full text-sm font-medium cursor-pointer transition ${
+              filter === f
                 ? "bg-secondary text-white"
-                : "text-gray-600"
+                : "bg-white text-gray-900 hover:bg-secondary hover:text-white"
             }`}
           >
-            {t.toUpperCase()}
+            {f.toUpperCase()}
           </button>
         ))}
+        </div>
+
+          {/* search */}
+        <div className="relative w-72">
+          <Search className="absolute left-3 top-3 w-4 h-4 text-secondary" />
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Search attendees..."
+            className="w-full pl-9 pr-3 py-2 text-sm rounded-xl bg-white text-secondary focus:outline-none"
+          />
+        </div>
       </div>
 
-      {/* BULK ACTIONS */}
-      {selected.length > 0 && tab === "pending" && (
-        <div className="flex gap-2 mb-4">
-          <button
-            onClick={() => bulkUpdate("approved")}
-            className="bg-green-600 text-white px-3 py-1 rounded"
-          >
-            Approve ({selected.length})
-          </button>
+      {/* 📋 TABLE (premium UI version of your design) */}
+      <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
 
-          <button
-            onClick={() => bulkUpdate("rejected")}
-            className="bg-red-600 text-white px-3 py-1 rounded"
-          >
-            Reject ({selected.length})
-          </button>
-        </div>
-      )}
+        {/* TABLE */}
+        <table className="w-full text-sm">
 
-      {/* LIST */}
-      <div className="space-y-3">
+          <thead className="bg-secondary text-white text-sm uppercase tracking-wide">
+            <tr>
+              <th className="px-6 py-3 text-left">User</th>
+              <th className="px-6 py-3 text-left">Email</th>
+              <th className="px-6 py-3 text-left">Event</th>
+              <th className="px-6 py-3 text-left">Status</th>
+              <th className="px-6 py-3 text-left">Registered</th>
+              <th className="px-6 py-3 text-left">Action</th>
+              <th className="px-6 py-3"></th>
+            </tr>
+          </thead>
 
-        {filtered.length === 0 && (
-          <p className="text-gray-400 text-center py-4">
-            No {tab} attendees
-          </p>
-        )}
+          <tbody className="divide-y divide-gray-300">
 
-        {filtered.map((a: any) => (
-          <div
-            key={a.id}
-            className="flex items-center justify-between border p-3 rounded-lg"
-          >
+            {filteredParticipants.map((p) => (
+              <tr key={p.id} className="hover:bg-gray-50 transition">
 
-            {/* CHECKBOX (only pending) */}
-            {tab === "pending" && (
-              <input
-                type="checkbox"
-                checked={selected.includes(a.id)}
-                onChange={() => toggleSelect(a.id)}
-                className="mr-2"
-              />
-            )}
+                {/* USER */}
+                <td className="px-6 py-4">
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={getAvatar(p.email)}
+                      className="w-10 h-10 text-sm rounded-lg object-cover"
+                    />
+                    <div>
+                      <p className="text-gray-900">{p.name}</p>
+                      <p className="text-xs text-gray-400">ID: {p.id}</p>
+                    </div>
+                  </div>
+                </td>
 
-            {/* INFO */}
-            <div className="flex-1">
-              <p className="font-semibold">{a.name}</p>
-              <p className="text-sm text-gray-500">{a.email}</p>
-            </div>
+                {/* EMAIL */}
+                <td className="px-6 py-4 text-gray-600">
+                  {p.email}
+                </td>
 
-            {/* STATUS */}
-            <div className="flex items-center gap-2">
+                {/* EVENT */}
+                <td className="px-6 py-4 text-gray-600">
+                  {p.event_name}
+                </td>
 
-              {a.status === "pending" && (
-                <span className="flex items-center gap-1 text-yellow-500 text-sm">
-                  <FiClock /> Pending
-                </span>
-              )}
-
-              {a.status === "approved" && (
-                <span className="text-green-600 text-sm">
-                  Approved
-                </span>
-              )}
-
-              {a.status === "rejected" && (
-                <span className="text-red-500 text-sm">
-                  Rejected
-                </span>
-              )}
-
-              {/* ACTIONS */}
-              {a.status === "pending" && (
-                <div className="flex gap-2 ml-2">
-
-                  <button
-                    onClick={() => updateStatus(a.id, "approved")}
-                    className="text-green-600 hover:scale-110 transition"
+                {/* STATUS */}
+                <td className="px-6 py-4">
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs font-medium ${
+                      p.status === "approved"
+                        ? "bg-green-100 text-green-700"
+                        : p.status === "rejected"
+                        ? "bg-red-100 text-red-700"
+                        : "bg-yellow-100 text-yellow-700"
+                    }`}
                   >
-                    <FiCheck />
-                  </button>
+                    {p.status}
+                  </span>
+                </td>
 
-                  <button
-                    onClick={() => updateStatus(a.id, "rejected")}
-                    className="text-red-500 hover:scale-110 transition"
-                  >
-                    <FiX />
-                  </button>
+                {/* DATE */}
+                <td className="px-6 py-4 text-gray-500">
+                  {new Date(p.created_at).toLocaleDateString()}
+                </td>
 
-                </div>
-              )}
+                {/* ACTION */}
+                <td className="px-6 py-4">
+                  {p.status === "pending" ? (
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => updateStatus(p.id, "approved")}
+                        className="p-2 rounded-lg cursor-pointer bg-green-600 text-white hover:bg-green-700"
+                      >
+                        <MdCheckCircle size={16} />
+                      </button>
 
-            </div>
-          </div>
-        ))}
+                      <button
+                        onClick={() => updateStatus(p.id, "rejected")}
+                        className="p-2 rounded-lg cursor-pointer bg-red-600 text-white hover:bg-red-700"
+                      >
+                        <MdCancel size={16} />
+                      </button>
+                    </div>
+                  ) : (
+                    <span className="text-gray-400">—</span>
+                  )}
+                </td>
 
+                {/* MORE ACTIONS (like 3-dot menu style in OrderHistory) */}
+                <td className="px-6 py-4 text-right">
+                  <button onClick={handleError}><MoreVertical
+                    size={18}
+                    className="text-gray-400 cursor-pointer hover:text-gray-600"
+                  /></button>
+                </td>
+                  
+              </tr>
+            ))}
+
+          </tbody>
+        </table>
       </div>
     </div>
   );
-}
+};
+
+/* 🔥 STAT CARD */
+const Stat = ({ label, value, color }: any) => (
+  <div className={`rounded-2xl p-4 text-white ${color}`}>
+    <p className="text-sm opacity-80">{label}</p>
+    <h3 className="text-2xl font-bold">{value}</h3>
+  </div>
+);
+
+export default Attendees;
