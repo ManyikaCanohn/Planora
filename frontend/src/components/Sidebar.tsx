@@ -14,6 +14,7 @@ import {
 
 import { useAuth } from "../context/AuthContext";
 import Swal from "sweetalert2";
+import { FaRocket } from "react-icons/fa6";
 
 const Sidebar = () => {
   const { logout } = useAuth();
@@ -57,11 +58,11 @@ const Sidebar = () => {
       `}
     >
       {/* TOP */}
-      <div className="mb-10 mt-3 flex items-center justify-between">
+      <div className="mb-5 flex items-center justify-between">
 
         {!collapsed && (
           <div>
-            <h1 className="bg-gradient-to-r from-violet-400 to-fuchsia-400 bg-clip-text text-3xl font-black uppercase text-transparent">
+            <h1 className="bg-gradient-to-r from-violet-400 to-fuchsia-400 bg-clip-text text-3xl font-bold uppercase text-transparent">
               Planora
             </h1>
 
@@ -162,13 +163,13 @@ const Sidebar = () => {
 
       {/* BOTTOM CARD */}
       {!collapsed && (
-        <div className="mt-8 rounded-3xl bg-gradient-to-br from-violet-600 to-purple-700 p-5 shadow-xl">
-          <h3 className="mb-2 text-lg font-bold">
-            Plan Events Faster 🚀
+        <div className="mt-2 rounded-3xl bg-gradient-to-br from-violet-600 to-purple-700 p-5 shadow-xl">
+          <h3 className="mb-2 text-lg font-bold flex items-center gap-2">
+            Plan Events Faster <FaRocket />
           </h3>
 
           <p className="text-sm text-white/80">
-            Manage registrations, schedules and attendees from one dashboard.
+            Unlock premium features and create smoother, smarter, and more successful events with the Pro experience.
           </p>
 
           <button className="mt-4 w-full rounded-2xl bg-white py-2 text-sm font-semibold text-violet-700 transition hover:scale-[1.02]">

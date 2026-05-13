@@ -12,6 +12,7 @@ import {
   Mail,
   Send,
 } from "lucide-react";
+import { FiCalendar, FiClock, FiMapPin } from "react-icons/fi";
 
 const API = "http://localhost:5000/api/invite";
 
@@ -129,61 +130,64 @@ export default function InvitePage() {
   // UI
   // ======================
   return (
-    <div className="min-h-screen bg-slate-100 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-slate-200 flex items-center justify-center px-4">
 
       <div className="w-full max-w-3xl grid md:grid-cols-2 gap-6">
 
         {/* ================= EVENT INFO ================= */}
-        <div className="bg-slate-900/70 border border-slate-800 rounded-2xl p-6 backdrop-blur-md">
+        <div className="bg-secondary p-6 text-white rounded-2xl flex flex-col justify-center shadow-xl">
           
-         <h1 className="text-2xl font-bold mt-2 text-white">
+         <h1 className="text-3xl uppercase font-bold mt-2 text-white">
             {event.title}
           </h1>
 
-<p className="text-sm text-slate-400 mt-2">
-  {event.description}
-</p>
+          <p className="text-sm text-white mt-2">
+            {event.description}
+          </p>
 
-{/* EVENT META FROM CALENDAR */}
-<div className="mt-5 space-y-2 text-sm text-slate-300">
+          {/* EVENT META FROM CALENDAR */}
+          <div className="mt-5 space-y-2 text-sm text-slate-300">
 
-  <p>
-    📅{" "}
-    {new Date(event.start_date).toLocaleDateString("en-GB", {
-      weekday: "short",
-      day: "2-digit",
-      month: "short",
-      year: "numeric",
-    })}
-  </p>
+            <p className="flex gap-2 items-center">
+              <span><FiCalendar /></span>
+              {" "}
+              {new Date(event.start_date).toLocaleDateString("en-GB", {
+                weekday: "short",
+                day: "2-digit",
+                month: "short",
+                year: "numeric",
+              })}
+            </p>
 
-  <p>
-    ⏰{" "}
-    {new Date(event.start_date).toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-    })}{" "}
-    →{" "}
-    {new Date(event.end_date).toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-    })}
-  </p>
+            <p className="flex gap-2 items-center">
+              <span><FiClock /></span>
+              {" "}
+              {new Date(event.start_date).toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}{" "}
+              →{" "}
+              {new Date(event.end_date).toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </p>
 
-  <p>
-    📍 {event.location_name || "Online / Not specified"}
-  </p>
+            <p className="flex gap-2 items-center">
+              <span><FiMapPin /></span>
+              {" "}
+              {event.location_name || "Online / Not specified"}
+            </p>
 
-</div>
-
+          </div>
         
         </div>
 
         {/* ================= FORM ================= */}
-        <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 shadow-xl">
+        <div className="bg-white border-2 border-secondary  rounded-2xl p-6 shadow-xl">
 
-          <h2 className="text-lg font-semibold mb-1">
-            Confirm your attendance
+          <h2 className="text-lg font-semibold mb-1 text-secondary">
+            Register for {event.title}.
           </h2>
 
           <p className="text-sm text-slate-400 mb-6">
@@ -195,7 +199,7 @@ export default function InvitePage() {
             <input
               value={form.name}
               placeholder="Full name"
-              className="w-full p-3 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
+              className="w-full p-3 border-b-2 border-secondary rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
               onChange={(e) =>
                 setForm({ ...form, name: e.target.value })
               }
@@ -204,7 +208,7 @@ export default function InvitePage() {
             <input
               value={form.email}
               placeholder="Email address"
-              className="w-full p-3 bg-slate-800 border border-slate-700 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
+              className="w-full p-3 border-b-2 border-secondary rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-600"
               onChange={(e) =>
                 setForm({ ...form, email: e.target.value })
               }
@@ -216,7 +220,7 @@ export default function InvitePage() {
               className={`w-full py-3 rounded-lg font-medium transition ${
                 submitting
                   ? "bg-slate-700 cursor-not-allowed"
-                  : "bg-purple-600 hover:bg-purple-700"
+                  : "bg-secondary text-white hover:bg-purple-700"
               }`}
             >
               {submitting ? "Submitting..." : "Join Event"}
@@ -224,7 +228,8 @@ export default function InvitePage() {
           </div>
 
           <p className="text-[11px] text-slate-500 mt-4 text-center">
-            Your request will be reviewed by the event organizer
+            You'll receive a confirmation message in your email if your 
+            registration is approved/rejected by the admin.
           </p>
         </div>
 

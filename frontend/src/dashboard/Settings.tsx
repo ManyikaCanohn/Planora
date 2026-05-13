@@ -73,7 +73,7 @@ const Settings = () => {
 
         <button
           onClick={handleSignOut}
-          className="mt-6 w-full py-2 bg-red-600 hover:bg-red-700 rounded-lg text-white font-semibold transition"
+          className="mt-6 cursor-pointer w-full py-2 bg-red-600 hover:bg-red-700 rounded-lg text-white font-semibold transition"
         >
           Logout
         </button>
@@ -106,7 +106,7 @@ const Settings = () => {
 
           <p className="text-gray-400 text-sm font-mono">
             Planora Event System v1.0 <br />
-            All systems operational. No issues detected.
+            © 2026 All rights reserved.
           </p>
         </div>
 
