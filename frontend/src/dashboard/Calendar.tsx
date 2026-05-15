@@ -160,228 +160,231 @@ export default function Calendar() {
   };
 
   return (
-    <div className="min-h-screen from-indigo-100 via-purple-100 to-indigo-200 flex">
+  <div className="min-h-screen flex flex-col">
 
-      {/* ================= MAIN ================= */}
-      <main className="flex-1">
+    {/* ================= MAIN ================= */}
+    <main className="flex-1 p-4 md:p-6 lg:p-8 overflow-x-hidden">
 
-        {/* TOP BAR */}
-        <div className="flex justify-between items-center mb-4">
-          <div>
-            <h1 className="text-3xl uppercase text-secondary font-bold text-gray-800">
-              Your event Calendar
-            </h1>
-            <p className="text-sm text-gray-500">
-              Click a day to view event details.
-            </p>
-          </div>
+      {/* TOP BAR */}
+      <div className="flex flex-col md:flex-row md:justify-between md:items-center gap-3 mb-5">
+
+        <div>
+          <h1 className="text-2xl md:text-3xl uppercase text-secondary font-bold">
+            Event Schedule Overview
+          </h1>
+          <p className="text-sm text-gray-500">
+            Click a day to view event details.
+          </p>
         </div>
 
+      </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-4">
+      {/* ================= STATS ================= */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
 
-          {/* 1. TODAY SUMMARY */}
-          <div className="bg-white/60 p-4 rounded-2xl shadow">
-            <p className="text-xs text-gray-500">Today Summary</p>
-            <h2 className="text-secondary font-bold">{todayEvents.length} Events</h2>
-          </div>
+        <div className="bg-white/70 p-3 md:p-4 rounded-2xl shadow">
+          <p className="text-xs text-gray-500">Today</p>
+          <h2 className="text-secondary font-bold text-sm md:text-base">
+            {todayEvents.length} Events
+          </h2>
+        </div>
 
-          {/* 2. NEXT EVENT */}
-          <div className="bg-white/60 p-4 rounded-2xl shadow flex items-center gap-2">
-            {/* <FiClock /> */}
-            <div>
-              <p className="text-xs text-gray-500">Next Event</p>
-              <h2 className="text-secondary font-bold">
-                {upcomingEvent
-                  ? upcomingEvent.title
-                  : "No upcoming events"}
-              </h2>
+        <div className="bg-white/70 p-3 md:p-4 rounded-2xl shadow">
+          <p className="text-xs text-gray-500">Next Event</p>
+          <h2 className="text-secondary font-bold text-sm md:text-base truncate">
+            {upcomingEvent ? upcomingEvent.title : "No upcoming events"}
+          </h2>
+        </div>
+
+        <div className="bg-white/70 p-3 md:p-4 rounded-2xl shadow">
+          <p className="text-xs text-gray-500">Countdown</p>
+          <h2 className="text-secondary font-bold text-sm md:text-base">
+            {upcomingEvent ? formatCountdown(upcomingEvent.diff) : "--"}
+          </h2>
+        </div>
+
+        <div className="bg-white/70 p-3 md:p-4 rounded-2xl shadow">
+          <p className="text-xs text-gray-500">This Week</p>
+          <h2 className="text-secondary font-bold text-sm md:text-base">
+            {weekEvents.length} Events
+          </h2>
+        </div>
+
+      </div>
+
+      {/* ================= MONTH NAV ================= */}
+      <div className="flex flex-col sm:flex-row justify-between items-center gap-3 mb-4">
+
+        <button
+          onClick={() => changeMonth(-1)}
+          className="w-full sm:w-auto px-4 py-2 bg-white/70 text-secondary rounded-xl shadow flex items-center justify-center gap-2"
+        >
+          <MdNavigateBefore />
+          Prev
+        </button>
+
+        <h2 className="text-sm md:text-lg font-semibold text-secondary uppercase text-center">
+          {monthLabel}
+        </h2>
+
+        <button
+          onClick={() => changeMonth(1)}
+          className="w-full sm:w-auto px-4 py-2 bg-white/70 text-secondary rounded-xl shadow flex items-center justify-center gap-2"
+        >
+          Next
+          <MdNavigateNext />
+        </button>
+
+      </div>
+
+      {/* ================= CALENDAR ================= */}
+      <div className="grid grid-cols-7 sm:grid-cols-7 gap-1 md:gap-2 overflow-x-auto">
+
+        {monthMatrix.map((date, i) => {
+          const dayEvents = getEventsForDay(date);
+
+          const hasReminder = reminders.some((r) => {
+            const d = new Date(r.start_date);
+            return (
+              d.getFullYear() === date.getFullYear() &&
+              d.getMonth() === date.getMonth() &&
+              d.getDate() === date.getDate()
+            );
+          });
+
+          return (
+            <div
+              key={i}
+              onClick={() => setSelectedDay(date)}
+              className="
+                bg-white/60 backdrop-blur
+                p-1 md:p-2
+                rounded-lg md:rounded-xl
+                min-h-[60px] md:min-h-[80px]
+                shadow-sm hover:shadow-md transition cursor-pointer
+                flex flex-col
+              "
+            >
+              <div className="text-sm md:text-lg font-semibold text-secondary mb-1 md:mb-2">
+                {date.getDate()}
+              </div>
+
+              <div className="space-y-1">
+                {dayEvents.slice(0, 2).map((event) => (
+                  <div
+                    key={event.id}
+                    className={`text-[9px] md:text-[10px] text-white px-1 md:px-2 py-[2px] rounded-md md:rounded-lg truncate ${typeColors[event.event_type]}`}
+                  >
+                    {event.title}
+                  </div>
+                ))}
+
+                {dayEvents.length > 2 && (
+                  <div className="text-[9px] md:text-[10px] text-gray-500">
+                    +{dayEvents.length - 2}
+                  </div>
+                )}
+
+                {hasReminder && (
+                  <div className="text-[9px] flex items-center gap-1 mt-1 px-2 py-[2px] rounded-full bg-yellow-400 text-black font-medium w-fit">
+                    <FiClock size={10} /> Soon
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
+          );
+        })}
 
-          {/* 3. COUNTDOWN */}
-          <div className="bg-white/60 p-4 rounded-2xl shadow">
-            <p className="text-xs text-gray-500">Countdown</p>
-            <h2 className="text-secondary font-bold">
-                {upcomingEvent
-                  ? formatCountdown(upcomingEvent.diff)
-                  : "--"}
-              </h2>
-          </div>
+      </div>
+    </main>
 
-          {/* 4. WEEK SNAPSHOT */}
-          <div className="bg-white/60 p-4 rounded-2xl shadow">
-            <p className="text-xs text-gray-500">This Week</p>
-            <h2 className="text-secondary font-bold">
-              {weekEvents.length} Events
-            </h2>
-          </div>
+    {/* ================= DAY MODAL ================= */}
+    {selectedDay && (
+      <div className="
+        fixed inset-0 lg:static
+        lg:right-0 lg:top-0 lg:h-full lg:w-96
+        bg-white/80 lg:bg-white/40
+        backdrop-blur-2xl
+        border-l border-white/30
+        shadow-2xl
+        p-4 md:p-5
+        flex flex-col
+        z-50
+      ">
 
-
-        </div>
-
-        {/* MONTH NAV */}
-        <div className="flex justify-between items-center mb-4">
-          <button
-            onClick={() => changeMonth(-1)}
-            className="px-3 py-1 bg-white/60 text-secondary rounded-xl shadow flex items-center gap-2"
-          >
-            <MdNavigateBefore />
-            Prev
-          </button>
-
-          <h2 className="text-lg font-semibold text-secondary uppercase">
-            {monthLabel}
+        {/* HEADER */}
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-sm md:text-lg font-bold text-gray-800">
+            {selectedDay.toDateString()}
           </h2>
 
           <button
-            onClick={() => changeMonth(1)}
-            className="px-3 py-1 bg-white/60 rounded-xl text-secondary shadow flex items-center gap-2"
+            onClick={() => setSelectedDay(null)}
+            className="text-gray-500 hover:text-gray-800 text-2xl"
           >
-            Next
-            <MdNavigateNext />
+            ✕
           </button>
         </div>
 
-        {/* CALENDAR GRID */}
-        <div className="grid grid-cols-7 gap-2">
-          {monthMatrix.map((date, i) => {
-            const dayEvents = getEventsForDay(date);
+        {/* REMINDERS */}
+        {reminders.length > 0 && (
+          <div className="mb-4 p-3 rounded-xl bg-yellow-100 border border-yellow-300">
+            <h3 className="text-sm font-semibold text-yellow-800">
+              Upcoming Reminders
+            </h3>
 
-            const hasReminder = reminders.some((r) => {
-              const d = new Date(r.start_date);
-              return (
-                d.getFullYear() === date.getFullYear() &&
-                d.getMonth() === date.getMonth() &&
-                d.getDate() === date.getDate()
-              );
-            });
-
-            return (
-              <div
-                key={i}
-                onClick={() => setSelectedDay(date)}
-                className="bg-white/50 backdrop-blur p-2 rounded-xl min-h-[80px] shadow-sm hover:shadow-md transition cursor-pointer"
-              >
-                <div className="text-lg font-semibold text-secondary mb-2">
-                  {date.getDate()}
+            <div className="mt-2 space-y-1">
+              {reminders.map((r) => (
+                <div key={r.id} className="text-xs text-yellow-900">
+                  ⏰ {r.title}
                 </div>
-
-                <div className="space-y-1">
-                  {dayEvents.slice(0, 2).map((event) => (
-                    <div
-                      key={event.id}
-                      className={`text-[10px] text-white px-2 py-1 rounded-lg truncate ${
-                        typeColors[event.event_type]
-                      }`}
-                    >
-                      {event.title}
-                    </div>
-                  ))}
-
-                  {dayEvents.length > 2 && (
-                    <div className="text-[10px] text-gray-500">
-                      +{dayEvents.length - 2} more
-                    </div>
-                  )}
-
-                  {hasReminder && (
-                    <div className="text-[10px] flex items-center gap-1 mt-1 px-2 py-[2px] rounded-full bg-yellow-400 text-black font-medium w-fit">
-                      <FiClock /> Soon
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </main>
-
-      {/* ================= DAY MODAL ================= */}
-      {selectedDay && (
-        <div className="fixed right-0 top-0 h-full w-96 bg-white/40 backdrop-blur-2xl border-l border-white/30 shadow-2xl p-5 flex flex-col">
-
-          {/* HEADER */}
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-bold text-gray-800">
-              {selectedDay.toDateString()}
-            </h2>
-
-            <button
-              onClick={() => setSelectedDay(null)}
-              className="text-gray-500 hover:text-gray-800 text-xl"
-            >
-              ✕
-            </button>
-          </div>
-
-          {/* REMINDERS */}
-          {reminders.length > 0 && (
-            <div className="mb-4 p-3 rounded-xl bg-yellow-100 border border-yellow-300">
-              <h3 className="text-sm font-semibold text-yellow-800">
-                Upcoming Reminders
-              </h3>
-
-              <div className="mt-2 space-y-1">
-                {reminders.map((r) => (
-                  <div key={r.id} className="text-xs text-yellow-900">
-                    ⏰ {r.title} —{" "}
-                    {new Date(r.start_date).toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </div>
-                ))}
-              </div>
+              ))}
             </div>
-          )}
-
-          {/* EVENTS */}
-          <div className="flex-1 overflow-y-auto space-y-3">
-
-            {getEventsForDay(selectedDay).length === 0 ? (
-              <p className="text-gray-500">No events for this day</p>
-            ) : (
-              getEventsForDay(selectedDay).map((event) => (
-                <div
-                  key={event.id}
-                  className="p-4 rounded-2xl bg-white/60 border border-white/40 shadow-sm"
-                >
-                  <div className="flex justify-between items-start">
-                    <h3 className="font-semibold text-gray-800">
-                      {event.title}
-                    </h3>
-
-                    <span
-                      className={`text-[10px] px-2 py-1 rounded-full text-white ${
-                        typeColors[event.event_type]
-                      }`}
-                    >
-                      {event.event_type}
-                    </span>
-                  </div>
-
-                  <p className="text-xs text-gray-500 mt-1">
-                    {new Date(event.start_date).toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}{" "}
-                    →{" "}
-                    {new Date(event.end_date).toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                  </p>
-
-                  <p className="text-sm text-gray-600 mt-2">
-                    {event.description || "No description provided"}
-                  </p>
-                </div>
-              ))
-            )}
           </div>
+        )}
+
+        {/* EVENTS */}
+        <div className="flex-1 overflow-y-auto space-y-3">
+          {getEventsForDay(selectedDay).length === 0 ? (
+            <p className="text-gray-500 text-sm">No events for this day</p>
+          ) : (
+            getEventsForDay(selectedDay).map((event) => (
+              <div
+                key={event.id}
+                className="p-3 md:p-4 rounded-2xl bg-white/70 border border-white/40 shadow-sm"
+              >
+                <div className="flex justify-between items-start gap-2">
+                  <h3 className="font-semibold text-gray-800 text-sm">
+                    {event.title}
+                  </h3>
+
+                  <span
+                    className={`text-[9px] px-2 py-1 rounded-full text-white ${typeColors[event.event_type]}`}
+                  >
+                    {event.event_type}
+                  </span>
+                </div>
+
+                <p className="text-xs text-gray-500 mt-1">
+                  {new Date(event.start_date).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })} →{" "}
+                  {new Date(event.end_date).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                  })}
+                </p>
+
+                <p className="text-xs md:text-sm text-gray-600 mt-2">
+                  {event.description || "No description provided"}
+                </p>
+              </div>
+            ))
+          )}
         </div>
-      )}
-    </div>
-  );
+      </div>
+    )}
+  </div>
+);
 }

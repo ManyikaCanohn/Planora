@@ -1,9 +1,10 @@
 import { useState } from "react";
 import { loginUser } from "../api/auth";
+import { setToken } from "../utils/auth";
 import { NavLink, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
 import { FaGoogle, FaFacebookF} from "react-icons/fa"
-import { FiLock, FiMail, FiUser } from "react-icons/fi";
+import { FiEye, FiEyeOff, FiLock, FiMail, FiUser } from "react-icons/fi";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -11,51 +12,57 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
 
-  const handleLogin = async (e: React.FormEvent) => {
-      e.preventDefault();
+ const handleLogin = async (e: React.FormEvent) => {
+  e.preventDefault();
 
-      if (!email || !password) {
-        Swal.fire({
-          icon: "error",
-          title: "Missing Fields",
-          text: "Please fill in email and password",
-        });
-        return;
-      }
+  if (!email || !password) {
+    Swal.fire({
+      icon: "error",
+      title: "Missing Fields",
+      text: "Please fill in email and password",
+    });
+    return;
+  }
 
-      try {
-        setLoading(true);
+  try {
+    setLoading(true);
 
-        const res = await loginUser({ email, password });
+    const res = await loginUser({ email, password });
 
-        console.log("LOGIN SUCCESS:", res);
+    console.log("LOGIN SUCCESS:", res);
 
-        const user = res.user; // ✅ FIXED
+    // ✅ SAVE TOKEN
+    setToken(res.token);
 
-        Swal.fire({
-          icon: "success",
-          title: "Login Successful 🎉",
-          timer: 1500,
-          showConfirmButton: false,
-        });
+    // OPTIONAL: save user
+    const user = res.user;
 
-        navigate("/dashboard");
+    Swal.fire({
+      icon: "success",
+      title: "Login Successful 🎉",
+      timer: 1500,
+      showConfirmButton: false,
+    });
 
-      } catch (err: any) {
-        console.log("FULL ERROR:", err);
-        console.log("ERROR DATA:", err.response?.data);
+    navigate("/dashboard");
 
-        Swal.fire({
-          icon: "error",
-          title: "Login Failed",
-          text: err.response?.data?.message || "Invalid credentials",
-        });
-      } finally {
-        setLoading(false);
-      }
-    };
+  } catch (err: any) {
+    console.log("FULL ERROR:", err);
+    console.log("ERROR DATA:", err.response?.data);
+
+    Swal.fire({
+      icon: "error",
+      title: "Login Failed",
+      text: err.response?.data?.message || "Invalid credentials",
+    });
+
+  } finally {
+    setLoading(false);
+  }
+  };
 
   return (
     <section className="min-h-screen flex items-center justify-center bg-gradient-to-r from-purple-800 to-blue-200 px-4">
@@ -107,15 +114,27 @@ export default function Login() {
 
                     {/* Password */}
 
-                    <div className="flex ites-center border-b border-gray-300 py-2">
-
-                      <FiLock className="text-2xl text-secondary mr-3" />
-                      <input
-                          type="password"
-                          className="w-full font-mono text-secondary outline-none br-transparent"
+                    <div className="flex items-center border-b border-gray-300 py-2">
+  
+                        <FiLock className="text-2xl text-secondary mr-3" />
+                        <input
+                          type={showPassword ? "text" : "password"}
+                          className="w-full font-mono text-secondary outline-none bg-transparent"
                           placeholder="Password"
                           onChange={(e) => setPassword(e.target.value)}
                         />
+
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="ml-3 text-secondary hover:scale-110 transition"
+                        >
+                          {showPassword ? (
+                            <FiEyeOff className="text-xl" />
+                          ) : (
+                            <FiEye className="text-xl" />
+                          )}
+                        </button>
                     </div>
 
                     {/* FORGOT PASWORD */}
@@ -137,7 +156,7 @@ export default function Login() {
                           )}
                           {loading ? "Logging in..." : "Login"}
                         </button>
-                      </form>
+                </form>
 
                       <div className="mt-5  text-center font-mono">
                           <p className="mb-4 text-gray-400">Or login with</p>

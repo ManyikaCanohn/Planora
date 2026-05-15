@@ -1,11 +1,23 @@
-import React from "react";
+
 import { motion } from "framer-motion";
-import { FiCalendar, FiUsers, FiBell, FiArrowRight, FiLogIn, FiUserPlus, FiUser, FiActivity, FiHelpCircle, FiFileText, FiShield, FiInfo, FiEdit, FiMail, FiGithub, FiLinkedin, FiTwitter } from "react-icons/fi";
+import { FiCalendar, FiUsers, FiBell, FiArrowRight, FiLogIn, FiUserPlus, FiUser, FiActivity } from "react-icons/fi";
 import { FaBuilding, FaCalendarCheck, FaChartLine, FaChurch, FaMapMarkedAlt,  FaQuoteLeft, FaQuoteRight, FaSchool, FaStar, FaTicketAlt } from "react-icons/fa";
-import { MdPolicy } from "react-icons/md";
-import { SiDiscord, SiReddit } from "react-icons/si";
 import { useNavigate } from "react-router-dom";
 import bgTwo from "../assets/bgTwo.jpg"
+import {
+  CalendarDays,
+  Users,
+  Ticket,
+  BarChart3,
+  ShieldCheck,
+  LifeBuoy,
+  BellRing,
+  LayoutDashboard,
+  Activity,
+  Mail,
+  CheckCircle2,
+  Sparkles,
+} from "lucide-react";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 40 },
@@ -47,26 +59,6 @@ const testimonials =[
           ]
 
 /* ================= FOOTER LINKS ================= */
-
-const supportLinks = [
-  {name: "Help Center", icon: <FiHelpCircle />},
-  {name: 'FAQs', icon: <FiFileText />},
-  {name: "Terms and Conditions", icon: <MdPolicy />},
-  {name: "Privacy", icon: <FiShield />}
-]
-const companyLinks = [
-  {name: "About Us", icon: <FiInfo />},
-  {name: 'Careers', icon: <FiUsers />},
-  {name: "Blog/Updates", icon: <FiEdit />},
-  {name: "Contacts", icon: <FiMail />}
-]
-const connectLinks = [
-  {name: "Github", icon: <FiGithub />},
-  {name: 'Reddit', icon: <SiReddit />},
-  {name: "LinkedIn", icon: <FiLinkedin />},
-  {name: "Discord", icon: <SiDiscord />},
-  {name: "Twitter", icon: <FiTwitter />}
-]
 
 const LandingPage = () => {
 
@@ -124,7 +116,10 @@ const LandingPage = () => {
             {/* NAVBAR */}
             <nav className="fixed top-0 left-0 w-full bg-dark font-mono backdrop-blur-md border-b border-[#1F2937] z-50">
               <div className="max-w-6xl mx-auto flex items-center justify-between px-6 py-4">
-                <h1 className="text-xl font-bold text-white">Planora</h1>
+                <div className="flex items-center gap-2 text-secondary">
+                  <Sparkles className="" size={30} />
+                  <h1 className="text-2xl uppercase font-bold">Planora</h1>
+                </div>
 
                 <div className="flex items-center gap-3">
                   <button onClick={() => navigate("/login")} className="flex hover:bg-secondary cursor-pointer items-center gap-2 text-sm px-4 text-white py-2 rounded-xl border border-[#1F2937]">
@@ -297,64 +292,151 @@ const LandingPage = () => {
        
         </section>
 
-        <footer className="border-t bg-dark py-10 font-mono">
+      <footer className="border-t border-white/10 bg-dark py-12 font-mono">
         <div className="max-w-7xl mx-auto px-6 grid md:grid-cols-4 gap-10 text-gray-400">
+
+          {/* BRAND INFO */}
           <div>
-            <h3 className="font-orbitron text-white text-4xl mb-2">Planora</h3>
-            <p className="text-justify">
-                Planora helps you organize, manage, and track events from one powerful system.
+            <div className="flex items-center gap-2 mb-3">
+              <Sparkles className="text-secondary" size={30} />
+              <h3 className="font-orbitron text-white text-4xl">
+                Planora
+              </h3>
+            </div>
+
+            <p className="leading-7 text-gray-400">
+             Easily organize events, manage attendees, track registrations,
+            coordinate schedules, and stay updated in real time all from one
+            powerful dashboard built to save you time and simplify event planning.
             </p>
-            <p>Status: <span className="text-green-400">Online..</span> </p>
-            <p>Version: 1.1.0</p>
-            {/* <p>Engineer: Manyika Munyinda.</p> */}
           </div>
 
-              {/* COMPANY */}
+          {/* EVENT MANAGEMENT */}
           <div>
-            <h3 className=" text-secondary font-bold mb-4">Company</h3>
-            <div className="space-y-2">
-              {companyLinks.map((link, index) => (
-                <div key={index} className="flex items-center gap-2 text-gray-400
-                                hover:text-secondary cursor-pointer transition">
-                    <span className="text-secondary">{link.icon}</span>
-                    <span>{link.name}</span>
+            <h3 className="text-secondary font-bold mb-4 uppercase tracking-wider">
+              Event Management
+            </h3>
+
+            <div className="space-y-3">
+              {[
+                {
+                  icon: <CalendarDays size={18} />,
+                  label: "Create Events",
+                },
+                {
+                  icon: <Users size={18} />,
+                  label: "Manage Attendees",
+                },
+                {
+                  icon: <Ticket size={18} />,
+                  label: "Ticket Registrations",
+                },
+                {
+                  icon: <LayoutDashboard size={18} />,
+                  label: "Schedules & Timelines",
+                },
+                {
+                  icon: <BarChart3 size={18} />,
+                  label: "Event Analytics",
+                },
+              ].map((item, index) => (
+                <div
+                  key={index}
+                  className="flex items-center gap-3 hover:text-secondary cursor-pointer transition"
+                >
+                  <span className="text-secondary">{item.icon}</span>
+                  <span>{item.label}</span>
                 </div>
               ))}
             </div>
           </div>
 
-              {/* USER SUPPORT */}
+          {/* ORGANIZER SUPPORT */}
           <div>
-            <h3 className=" text-secondary  font-bold mb-4">User Support</h3>
-            <div className="space-y-2">
-              {supportLinks.map((link, index) => (
-                <div key={index} className="flex items-center gap-2 text-gray-400
-                           hover:text-secondary cursor-pointer transition">
-                    <span className="text-secondary">{link.icon}</span>
-                    <span>{link.name}</span>
+            <h3 className="text-secondary font-bold mb-4 uppercase tracking-wider">
+              Organizer Support
+            </h3>
+
+            <div className="space-y-3">
+              {[
+                {
+                  icon: <LifeBuoy size={18} />,
+                  label: "Help Center",
+                },
+                {
+                  icon: <ShieldCheck size={18} />,
+                  label: "Security & Privacy",
+                },
+                {
+                  icon: <BellRing size={18} />,
+                  label: "System Updates",
+                },
+                {
+                  icon: <Users size={18} />,
+                  label: "Community Support",
+                },
+                {
+                  icon: <Mail size={18} />,
+                  label: "Contact Support",
+                },
+              ].map((item, index) => (
+                <div
+                  key={index}
+                  className="flex items-center gap-3 hover:text-secondary cursor-pointer transition"
+                >
+                  <span className="text-secondary">{item.icon}</span>
+                  <span>{item.label}</span>
                 </div>
               ))}
             </div>
           </div>
 
-              {/* CONNECT WITH OUR TEAM */}
+          {/* PLATFORM FEATURES */}
           <div>
-            <h3 className=" text-secondary font-bold mb-4">Connect with our Team</h3>
-            <div className="space-y2">
-             {connectLinks.map((link, index) => (
-              <div key={index}  className="flex items-center gap-2 text-gray-400
-                         hover:text-secondary cursor-pointer transition">
-                <span className="text-secondary">{link.icon}</span>
-                <span>{link.name}</span>
-              </div>
-             ))}
+            <h3 className="text-secondary font-bold mb-4 uppercase tracking-wider">
+              Platform Features
+            </h3>
+
+            <div className="space-y-3">
+              {[
+                {
+                  icon: <LayoutDashboard size={18} />,
+                  label: "Organizer Dashboard",
+                },
+                {
+                  icon: <Activity size={18} />,
+                  label: "Live Event Tracking",
+                },
+                {
+                  icon: <Users size={18} />,
+                  label: "Team Collaboration",
+                },
+                {
+                  icon: <Mail size={18} />,
+                  label: "Email Notifications",
+                },
+                {
+                  icon: <BarChart3 size={18} />,
+                  label: "Smart Reports",
+                },
+              ].map((item, index) => (
+                <div
+                  key={index}
+                  className="flex items-center gap-3 hover:text-secondary cursor-pointer transition"
+                >
+                  <span className="text-secondary">{item.icon}</span>
+                  <span>{item.label}</span>
+                </div>
+              ))}
             </div>
           </div>
         </div>
 
-        <p className="text-center text-gray-400 mt-2">
-          © {new Date().getFullYear()} Planora. All rights reserved.
-        </p>
+        {/* BOTTOM */}
+        <div className="border-t border-white/10 mt-10 pt-5 text-center text-gray-500 text-sm">
+          © {new Date().getFullYear()} Planora Event Management System.
+          Built for seamless planning, registrations, and successful events.
+        </div>
       </footer>
       </section>
 

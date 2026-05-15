@@ -52,7 +52,7 @@ export default function EventDashboard() {
         </div>
       
       {/* Header */}
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex justify-between items-center mb-8 gap-3">
             {/* SEARCH INPUT */}
           <div className="w-full flex gap-2 relative max-w-md items-center">
               <FiSearch className="text-2xl absolute left-3 top-1/2 -translate-y-1/2 text-secondary" />
@@ -61,23 +61,12 @@ export default function EventDashboard() {
                   className="border border-secondary p-2 rounded w-full pl-10 pr-4 focus:outline-none font-mono"
                   onChange={(e) => setSearch(e.target.value)}
             />
-            <select
-              className="bg-white text-secondary focus:outline-none p-2 rounded"
-              onChange={(e) => setFilter(e.target.value)}
-            >
-              <option value="all">All</option>
-              <option value="draft">Draft</option>
-              <option value="published">Published</option>
-              <option value="completed">Completed</option>
-            </select>
           </div>
-          
-
             {/* CREATE EVENT BUTTON */}
-          <div>
+          <div className="w-full flex justify-end">
             <button
             onClick={handleCreate}
-            className="flex items-center gap-2 cursor-pointer border border-secondary text-secondary hover:bg-secondary hover:text-white transition px-4 py-2 rounded-xl hover:bg-purple-700"
+            className="flex items-center gap-2 cursor-pointer bg-secondary text-white hover:bg-secondary hover:text-white transition px-4 py-2 rounded-xl hover:bg-purple-700"
             >
             <FiPlus /> Create Event
           </button>

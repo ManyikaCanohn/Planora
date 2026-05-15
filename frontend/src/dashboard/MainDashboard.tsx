@@ -171,7 +171,7 @@ const upcomingEvents = [...events]
         <main className="flex-1">
 
           {/* HERO */}
-          <section className="relative mb-8 overflow-hidden rounded-[32px] bg-gradient-to-r from-[#9b5cf5] to-[#b46eff] p-8 text-white">
+          <section className="relative mb-5 overflow-hidden rounded-[32px] bg-gradient-to-r from-[#9b5cf5] to-[#b46eff] p-4 text-white">
             <div className="relative z-10 max-w-lg">
               <Welcome />
               <p className="mt-3 text-sm text-white/80">
@@ -249,7 +249,7 @@ const upcomingEvents = [...events]
                       return (
                         <motion.div
                           key={event.id}
-                          whileHover={{ y: -6, scale: 1.02 }}
+                          whileHover={{ y: -4 }}
                           transition={{ type: "spring", stiffness: 200 }}
                           className="
                             relative overflow-hidden

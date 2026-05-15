@@ -2,7 +2,6 @@ import { Routes, Route } from "react-router-dom";
 
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import ProtectedRoute from "./routes/ProtectedRoute";
 
 import DashboardLayout from "./layouts/DashboardLayout";
 import LandingPage from "./pages/LandingPage";
@@ -16,7 +15,7 @@ import Settings from "./dashboard/Settings";
 import EventDashboard from "./dashboard/EventDashboard";
 import InvitePage from "./pages/InvitePage";
 import MainDashboard from "./dashboard/MainDashboard";
-// import Dashboard from "./dashboard/Dashboard";
+
 
 
 export default function App() {
@@ -32,36 +31,19 @@ export default function App() {
         <Route path="/" element={<LandingPage />} />
 
         {/* DASHBOARD (PROTECTED) */}
-        <Route
-          path="/dashboard"
-          element={
-            <ProtectedRoute>
-              <DashboardLayout />
-            </ProtectedRoute>
-          }
-        > 
-
-          <Route index element={<MainDashboard />} />
-          <Route path="attendees" element={<Attendees />} />
-          <Route path="events" element={<EventDashboard />} />
-          <Route path="members" element={<Members />} />
-          <Route path="about" element={<About />} />
-          <Route path="messaging" element={<Messaging />} />
-          <Route path="calendar" element={<Calendar />} />
-          <Route path="reportanalytics" element={<ReportAnalytics />} />
-          <Route path="settings" element={<Settings />} />
-        
+        <Route>
+          <Route path="/dashboard" element={<DashboardLayout />}>
+            <Route index element={<MainDashboard />} />
+            <Route path="attendees" element={<Attendees />} />
+            <Route path="events" element={<EventDashboard />} />
+            <Route path="members" element={<Members />} />
+            <Route path="about" element={<About />} />
+            <Route path="messaging" element={<Messaging />} />
+            <Route path="calendar" element={<Calendar />} />
+            <Route path="reportanalytics" element={<ReportAnalytics />} />
+            <Route path="settings" element={<Settings />} />
+          </Route>
         </Route>
-
-        {/* DASHBOARD PAGES */}
-
-        {/* <Route index element={<Dashboard />} /> */}
-          
-
-        
-
-     
-
       </Routes>
   );
 }

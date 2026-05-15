@@ -32,7 +32,7 @@ const Welcome = () => {
           {user ? `${getGreeting(time.getHours())}, ${user.name}!` : `${getGreeting(time.getHours())}!`}
         </h1>
         <p className="text-lg text-muted">
-          📆 {time.toLocaleDateString("en-GB", { month: "long" })}, {time.toLocaleDateString("en-GB", { weekday: "long" })}: {time.toLocaleDateString()} ⌚ {time.toLocaleTimeString()}.
+           {time.toLocaleDateString("en-GB", { month: "long" })}, {time.toLocaleDateString("en-GB", { weekday: "long" })}: {time.toLocaleDateString()} {time.toLocaleTimeString()}.
         </p>
       </div>
     );
